@@ -111,16 +111,29 @@ def summarize_by_sentiment(articles, sentiment_label, keywords):
         for a in articles
         if a['sentiment'] == sentiment_label and a['description'] and contains_keywords(f"{a['description']} {a['title']}", keywords)
     ]
-    if not texts:
-        return "No related news articles found."
-    joined = "\n".join(texts)
-    max_tokens = 1000
-    truncated = " ".join(joined.split()[:max_tokens])
+    
+    if len(texts) < 1:
+        return "No matching articles found for summarization."
+
+    chunks = []
+    word_limit = 500
+    current_chunk = []
+    total_words = 0
+
+    for t in texts:
+        w_count = len(t.split())
+        if total_words + w_count > word_limit:
+            break
+        current_chunk.append(t)
+        total_words += w_count
+
+    truncated = " ".join(current_chunk)
     try:
         summary = summarizer(truncated, max_length=200, min_length=60, do_sample=False)[0]['summary_text']
         return summary
-    except:
-        return "Summarization failed."
+    except Exception as e:
+        return "Summarization failed due to model input error."
+
 
 def draw_sentiment_chart(articles):
     total = len(articles)
