@@ -1,9 +1,5 @@
-# Core app UI
 streamlit
-
-# NLP + AI
 transformers
-
-# Data processing & chart
-requests
+torch
 matplotlib
+requests
