@@ -2,7 +2,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import cm
-from adjustText import adjust_text
+from adjustText import adjust_text # adjustText 추가
 from datetime import datetime
 from core import analyze_topic
 from config import LANG_TEXT, INDUSTRY_KEYWORDS, COUNTRY_LIST
@@ -53,7 +53,6 @@ if "result" in st.session_state:
         padding: 0 1.5rem;
     }}
     .section-title {{ font-size:1.3em; font-weight:bold; margin-top:2em; }}
-    h2, h3 {{ color: {WISERBOND_COLOR}; }}
     @media print {{
         .element-container {{ page-break-inside: avoid; }}
     }}
@@ -75,13 +74,11 @@ if "result" in st.session_state:
 
     # 2. Sector Sentiment Spectrum (with adjustText)
     st.markdown("### 2. Sector Sentiment Spectrum")
-
     col1, col2, col3 = st.columns([1, 7, 1])
     with col2:
         sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
         all_scores = [sentiment_map.get(a["sentiment"], 0.5) for a in result["positive_news"] + result["negative_news"]]
         overall_score = sum(all_scores) / len(all_scores)
-
         fig, ax = plt.subplots(figsize=(5, 1.2), dpi=100)
         gradient = np.linspace(0, 1, 256).reshape(1, -1)
         ax.imshow(gradient, aspect='auto', cmap=cm.coolwarm, extent=[0, 1, -0.15, 0.15], alpha=0.2)
@@ -90,12 +87,12 @@ if "result" in st.session_state:
 
         texts = []
         sector_colors = [WISERBOND_COLOR] * len(sector_sentiment_scores)
-        sectors_sorted = sorted(sector_sentiment_scores.items(), key=lambda x: x[1])  # 감정 점수 순 정렬
+        sectors_sorted = sorted(sector_sentiment_scores.items(), key=lambda x: x[1]) # 감정 점수 순 정렬
 
         for i, (sector, score) in enumerate(sectors_sorted):
             ax.plot(score, 0, marker="o", color=sector_colors[i], markersize=8, zorder=3)
             text = ax.text(score, 0.25, sector, fontsize=8, ha="center", va="bottom",
-                           fontweight="medium", color=WISERBOND_COLOR)
+                            fontweight="medium", color=WISERBOND_COLOR)
             texts.append(text)
 
         adjust_text(
@@ -125,7 +122,7 @@ if "result" in st.session_state:
         sector = item['sector']
         impact = item['impact']
         source = item.get('source', 'Unknown')
-        st.markdown(f"- **{sector}**: {impact} <span style='color:{WISERBOND_COLOR}'>({source})</span>", unsafe_allow_html=True)
+        st.markdown(f"- **{sector}**: {impact} ({source})", unsafe_allow_html=True)
 
     # 4. Wiserbond Interpretation
     st.markdown("### 4. Wiserbond Interpretation")
