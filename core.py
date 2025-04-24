@@ -12,7 +12,7 @@ def detect_impacted_sectors(articles):
     impact_map = {}
     source_map = {}
     for a in articles:
-        text = f"{a['title']} {a['description'] or ''}".lower()
+        text = f"{a['title']} {a.get('description', '')}".lower()
         for sector, keywords in SECTOR_KEYWORDS.items():
             if any(k in text for k in keywords):
                 impact_map.setdefault(sector, []).append(text)
@@ -30,6 +30,32 @@ def summarize_sector_impact(sector_texts):
         return summary
     except:
         return "Summary model failed."
+
+def compute_sector_sentiment_scores(analyzed, sector_keywords):
+    """
+    섹터별 평균 감정 점수 계산 (NEG=0.0, NEU=0.5, POS=1.0)
+    결과: {"Auto Industry": 0.2, "Policy Dynamics": 0.6, ...}
+    """
+    sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
+    sector_scores = {}
+    sector_counts = {}
+
+    for a in analyzed:
+        text = f"{a['title']} {a.get('description', '')}".lower()
+        score = sentiment_map.get(a["sentiment"], 0.5)
+        for sector, keywords in sector_keywords.items():
+            if any(k in text for k in keywords):
+                sector_scores.setdefault(sector, 0.0)
+                sector_counts.setdefault(sector, 0)
+                sector_scores[sector] += score
+                sector_counts[sector] += 1
+
+    averaged_scores = {
+        sector: (sector_scores[sector] / sector_counts[sector])
+        for sector in sector_scores
+    }
+
+    return averaged_scores
 
 def analyze_topic(topic, industry, country):
     setting = TOPIC_SETTINGS[topic]
@@ -82,6 +108,8 @@ def analyze_topic(topic, industry, country):
             "source": most_common_source
         })
 
+    sector_sentiment_scores = compute_sector_sentiment_scores(analyzed, SECTOR_KEYWORDS)
+
     return {
         "sentiment_counts": sentiment_counts,
         "positive_news": pos_news,
@@ -90,5 +118,6 @@ def analyze_topic(topic, industry, country):
         "negative_sources": neg_sources,
         "expert_summary": expert_summary,
         "executive_summary": executive_summary,
-        "impact_summary": impact_summary
+        "impact_summary": impact_summary,
+        "sector_sentiment_scores": sector_sentiment_scores
     }
