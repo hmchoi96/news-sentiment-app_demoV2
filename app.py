@@ -5,37 +5,34 @@ from datetime import datetime
 from core import analyze_topic
 from config import LANG_TEXT, INDUSTRY_KEYWORDS, COUNTRY_LIST
 from news_sentiment_tool_demo import TOPIC_SETTINGS
-from ui_components import display_news_section, draw_sentiment_chart
 
-# 페이지 설정
-st.set_page_config(page_title="Wiserbond News Report", layout="wide")
+# Page Setup
+st.set_page_config(page_title="Wiserbond News Sentiment Report", layout="wide")
 
-# --- 사이드바 입력값 설정 ---
-st.sidebar.title("🔍 분석 설정")
-topic_choice = st.sidebar.selectbox("주제", list(TOPIC_SETTINGS.keys()))
-country_choice = st.sidebar.selectbox("국가", COUNTRY_LIST)
-industry_choice = st.sidebar.selectbox("산업", ["All"] + list(INDUSTRY_KEYWORDS.keys()))
-language_choice = st.sidebar.selectbox("언어 선택", list(LANG_TEXT.keys()))
-st.session_state["language"] = language_choice
+# Sidebar - Input Controls
+st.sidebar.title("🔍 Analysis Settings")
+topic_choice = st.sidebar.selectbox("Topic", list(TOPIC_SETTINGS.keys()))
+country_choice = st.sidebar.selectbox("Country", COUNTRY_LIST)
+industry_choice = st.sidebar.selectbox("Industry", ["All"] + list(INDUSTRY_KEYWORDS.keys()))
+language_choice = st.sidebar.selectbox("Language", list(LANG_TEXT.keys()))
+st.session_state["language"] = language_choice  # UI only
 
-# 분석 실행
-with st.spinner("뉴스를 분석 중입니다..."):
-    result = analyze_topic(topic_choice, country_choice, industry_choice, language_choice)
+# Run analysis
+with st.spinner("Running sentiment and summary analysis..."):
+    result = analyze_topic(topic_choice, industry_choice, country_choice)
 
-# 결과 변수 추출
+# Extract result variables
 summary_text = result["summary"]
 sentiment_counts = result["sentiment_counts"]
 top_articles = result["top_articles"]
 expert_comment = result["expert_comment"]
-analysis_date = datetime.now().strftime("%Y년 %m월 %d일 %H:%M")
+analysis_date = datetime.now().strftime("%B %d, %Y %H:%M")
 
-# --- 보고서 본문 시작 ---
-
-# 스타일 삽입 (폰트/출력 안정화)
+# Style for print compatibility
 st.markdown("""
 <style>
 body {
-    font-family: 'Noto Sans KR', sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     font-size: 0.95rem;
     line-height: 1.6;
     margin: 0 auto;
@@ -48,43 +45,43 @@ body {
 </style>
 """, unsafe_allow_html=True)
 
-# 헤더
-st.markdown("## Wiserbond News Synthesizer V2 – 감정·요약 보고서")
-st.write(f"**분석 기준:** {analysis_date}")
+# Report Header
+st.markdown("## Wiserbond News Synthesizer V2 – Sentiment & Summary Report")
+st.write(f"**Date:** {analysis_date}")
 st.write("---")
 
-# 1. 핵심 요약
-st.markdown("### 1. 핵심 요약")
+# Section 1 - Executive Summary
+st.markdown("### 1. Executive Summary")
 st.info(summary_text)
 
-# 2. 감정 흐름 시각화
-st.markdown("### 2. 감정 흐름")
+# Section 2 - Sentiment Breakdown
+st.markdown("### 2. Sentiment Breakdown")
 fig, ax = plt.subplots(figsize=(5, 1.5))
-colors = ['#4caf50', '#ffc107', '#f44336']
+colors = ['#4caf50', '#ffc107', '#f44336']  # Green, Yellow, Red
 ax.bar(sentiment_counts.keys(), sentiment_counts.values(), color=colors)
-ax.set_ylabel("기사 수")
+ax.set_ylabel("Article Count")
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 st.pyplot(fig)
 
-# 3. 주요 기사 요약
-st.markdown("### 3. 주요 기사 요약")
+# Section 3 - Top News Summaries
+st.markdown("### 3. Top News Highlights")
 for idx, art in enumerate(top_articles, 1):
     with st.expander(f"{idx}. {art['title']}"):
         st.write(art["summary"])
-        st.markdown(f"[전체 기사 보기]({art['url']})")
+        st.markdown(f"[Read full article]({art['url']})")
 
-# 4. 전문가 해석
-st.markdown("### 4. 전문가 해석")
+# Section 4 - Expert Interpretation
+st.markdown("### 4. Expert Insight")
 st.success(expert_comment)
 
-# 5. 분석 설정
-st.markdown("### 5. 분석 설정")
-st.write(f"- **주제:** {topic_choice}")
-st.write(f"- **국가:** {country_choice}")
-st.write(f"- **산업:** {industry_choice}")
-st.write(f"- **언어:** {language_choice}")
+# Section 5 - Analysis Settings
+st.markdown("### 5. Analysis Details")
+st.write(f"- **Topic:** {topic_choice}")
+st.write(f"- **Country:** {country_choice}")
+st.write(f"- **Industry:** {industry_choice}")
+st.write(f"- **Language:** {language_choice}")
 
-# 인쇄 안내
+# Footer
 st.markdown("---")
-st.markdown("*이 보고서는 전문가용 제출 형식에 맞춰 인쇄 및 PDF 저장 시 레이아웃이 유지되도록 설계되었습니다.*")
+st.markdown("*This report layout is optimized for professional printing and PDF export.*")
