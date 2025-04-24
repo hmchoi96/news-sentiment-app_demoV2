@@ -72,45 +72,40 @@ if "result" in st.session_state:
     st.markdown("### 1. Executive Summary")
     st.info(executive_summary)
 
-    # 2. Sector Sentiment Spectrum (Structured style)
+    # 2. Sector Sentiment Spectrum (45도 라벨 정리형)
     st.markdown("### 2. Sector Sentiment Spectrum")
-
+    
     col1, col2, col3 = st.columns([1, 7, 1])
     with col2:
         sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
         all_scores = [sentiment_map.get(a["sentiment"], 0.5) for a in result["positive_news"] + result["negative_news"]]
         overall_score = sum(all_scores) / len(all_scores)
-
+    
         fig, ax = plt.subplots(figsize=(6.5, 1.5), dpi=100)
-
-        # 바 배경
+    
+        # 감정 바
         ax.hlines(0, 0, 1, colors="#bbb", linewidth=12, zorder=1)
-
-        # 양 끝 감정 심볼
+    
+        # 바 양 끝 심볼
         ax.text(0, 0.05, "-", fontsize=16, ha="center", va="bottom", color=WISERBOND_COLOR)
         ax.text(1, 0.05, "+", fontsize=16, ha="center", va="bottom", color=WISERBOND_COLOR)
-
-        # 전체 평균
+    
+        # 전체 평균 표시 (■)
         ax.plot(overall_score, 0, marker="s", color=WISERBOND_COLOR, markersize=12, zorder=3)
-
-        # 섹터 점 + 라벨 (화살표)
+    
+        # 섹터 마커와 45도 라벨
         sectors_sorted = sorted(sector_sentiment_scores.items(), key=lambda x: x[1])
-        for i, (sector, score) in enumerate(sectors_sorted):
+        for sector, score in sectors_sorted:
             ax.plot(score, 0, marker="o", color=WISERBOND_COLOR, markersize=8, zorder=2)
-            label_y = 0.25 if i % 2 == 0 else -0.3
-            ax.annotate(
-                sector,
-                xy=(score, 0), xytext=(score, label_y),
-                ha="center", va="bottom" if label_y > 0 else "top",
-                fontsize=8, color=WISERBOND_COLOR,
-                arrowprops=dict(arrowstyle="->", color="#999", lw=0.5)
-            )
-
+            ax.text(score, -0.22, sector, rotation=45, fontsize=8,
+                    ha="right", va="top", color=WISERBOND_COLOR)
+    
         ax.set_xlim(-0.05, 1.05)
-        ax.set_ylim(-0.45, 0.45)
-        ax.axis('off')
+        ax.set_ylim(-0.5, 0.4)
+        ax.axis("off")
         plt.tight_layout()
         st.pyplot(fig)
+
 
     # 3. Sector Impact Breakdown
     st.markdown("### 3. Sector Impact Breakdown")
