@@ -6,7 +6,7 @@ from news_sentiment_tool_demo import (
     summarize_by_sentiment,
     TOPIC_SETTINGS
 )
-from config import INDUSTRY_KEYWORDS
+from config import INDUSTRY_KEYWORDS, SECTOR_KEYWORDS
 
 def analyze_topic(topic, industry, country):
     # 1. 검색어 설정
