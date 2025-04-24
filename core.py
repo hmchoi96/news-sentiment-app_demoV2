@@ -6,24 +6,24 @@ from news_sentiment_tool_demo import (
     TOPIC_SETTINGS
 )
 from config import INDUSTRY_KEYWORDS, SECTOR_KEYWORDS
+from collections import Counter
 
 def detect_impacted_sectors(articles):
     impact_map = {}
+    source_map = {}
     for a in articles:
         text = f"{a['title']} {a['description'] or ''}".lower()
         for sector, keywords in SECTOR_KEYWORDS.items():
             if any(k in text for k in keywords):
                 impact_map.setdefault(sector, []).append(text)
-    return impact_map
+                source_map.setdefault(sector, []).append(a.get('source', 'Unknown'))
+    return impact_map, source_map
 
 def summarize_sector_impact(sector_texts):
     if not sector_texts:
         return "No clear impact found."
-
-    # ✅ moved inside function to avoid Streamlit-PyTorch startup conflict
     from transformers import pipeline
     summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
-
     text_block = " ".join(sector_texts)[:512]
     try:
         summary = summarizer(text_block, max_length=40, min_length=10, do_sample=False)[0]["summary_text"]
@@ -66,18 +66,20 @@ def analyze_topic(topic, industry, country):
 
     dominant_sentiment = max(sentiment_counts, key=sentiment_counts.get)
     top_issue_summary = "renewed US tariff threats and China's retaliatory stance"
-
     executive_summary = (
         f"Over the past 3 days, news coverage on **{topic}** has been predominantly "
         f"**{dominant_sentiment.lower()}**, with a focus on {top_issue_summary}."
     )
 
     impact_summary = []
-    detected = detect_impacted_sectors(analyzed)
-    for sector, texts in detected.items():
+    impact_map, source_map = detect_impacted_sectors(analyzed)
+    for sector, texts in impact_map.items():
+        sources = source_map.get(sector, [])
+        most_common_source = Counter(sources).most_common(1)[0][0] if sources else "Unknown"
         impact_summary.append({
             "sector": sector,
-            "impact": summarize_sector_impact(texts)
+            "impact": summarize_sector_impact(texts),
+            "source": most_common_source
         })
 
     return {
