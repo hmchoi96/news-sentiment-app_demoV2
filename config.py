@@ -40,3 +40,37 @@ INDUSTRY_KEYWORDS = {
 }
 
 COUNTRY_LIST = ["Global", "United States", "Canada", "Japan", "China", "Germany", "India", "South Korea"]
+
+# 확장된 SECTOR_KEYWORDS: 각 섹터별 키워드 정의
+SECTOR_KEYWORDS = {
+    "Semiconductor Industry": [
+        "semiconductor", "chip", "fab", "TSMC", "ASML", "foundry", "wafer", "lithography"
+    ],
+    "Global Supply Chains": [
+        "supply chain", "logistics", "container", "shipping delay", "port", "disruption", "transport"
+    ],
+    "Financial Markets": [
+        "stock", "indices", "bonds", "equity", "volatility", "nasdaq", "dow", "s&p", "market sentiment"
+    ],
+    "Policy Dynamics": [
+        "tariff", "sanction", "retaliation", "trade war", "regulation", "geopolitics", "white house"
+    ],
+    "Auto Industry": [
+        "automotive", "EV", "car sales", "battery", "tesla", "BYD", "charging station", "recall"
+    ],
+    "Retail & Consumer": [
+        "retail", "consumer spending", "ecommerce", "mall", "shopping", "sales growth", "luxury demand"
+    ],
+    "Energy Sector": [
+        "oil", "gas", "OPEC", "fossil fuel", "energy prices", "renewable", "solar", "wind", "electricity"
+    ],
+    "Labor Market": [
+        "unemployment", "hiring", "layoffs", "job market", "nonfarm payroll", "job growth", "recruitment"
+    ],
+    "Technology Sector": [
+        "AI", "cloud", "software", "data center", "tech layoffs", "big tech", "google", "microsoft"
+    ],
+    "Healthcare & Pharma": [
+        "healthcare", "drug", "FDA", "biotech", "vaccine", "clinical trial", "pharma", "hospital"
+    ]
+}
