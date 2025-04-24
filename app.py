@@ -2,7 +2,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import cm
-from adjustText import adjust_text # adjustText 추가
+from adjustText import adjust_text
 from datetime import datetime
 from core import analyze_topic
 from config import LANG_TEXT, INDUSTRY_KEYWORDS, COUNTRY_LIST
@@ -72,13 +72,14 @@ if "result" in st.session_state:
     st.markdown("### 1. Executive Summary")
     st.info(executive_summary)
 
-    # 2. Sector Sentiment Spectrum (with adjustText)
+    # 2. Sector Sentiment Spectrum (with improved label placement)
     st.markdown("### 2. Sector Sentiment Spectrum")
     col1, col2, col3 = st.columns([1, 7, 1])
     with col2:
         sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
         all_scores = [sentiment_map.get(a["sentiment"], 0.5) for a in result["positive_news"] + result["negative_news"]]
         overall_score = sum(all_scores) / len(all_scores)
+
         fig, ax = plt.subplots(figsize=(5, 1.2), dpi=100)
         gradient = np.linspace(0, 1, 256).reshape(1, -1)
         ax.imshow(gradient, aspect='auto', cmap=cm.coolwarm, extent=[0, 1, -0.15, 0.15], alpha=0.2)
@@ -87,20 +88,22 @@ if "result" in st.session_state:
 
         texts = []
         sector_colors = [WISERBOND_COLOR] * len(sector_sentiment_scores)
-        sectors_sorted = sorted(sector_sentiment_scores.items(), key=lambda x: x[1]) # 감정 점수 순 정렬
+        sectors_sorted = sorted(sector_sentiment_scores.items(), key=lambda x: x[1])
 
         for i, (sector, score) in enumerate(sectors_sorted):
             ax.plot(score, 0, marker="o", color=sector_colors[i], markersize=8, zorder=3)
-            text = ax.text(score, 0.25, sector, fontsize=8, ha="center", va="bottom",
-                            fontweight="medium", color=WISERBOND_COLOR)
+            y_init = 0.25 if i % 2 == 0 else -0.25
+            text = ax.text(score, y_init, sector, fontsize=8, ha="center",
+                           va="bottom" if y_init > 0 else "top",
+                           fontweight="medium", color=WISERBOND_COLOR)
             texts.append(text)
 
         adjust_text(
             texts,
             only_move={'points': 'y', 'texts': 'y'},
-            arrowprops=dict(arrowstyle="->", color="#888", lw=0.5),
-            force_text=0.5,
-            expand_text=(1.1, 1.2),
+            arrowprops=dict(arrowstyle="->", color="#999", lw=0.4),
+            force_text=1.0,
+            expand_text=(1.2, 1.3),
             expand_points=(1.1, 1.2)
         )
 
