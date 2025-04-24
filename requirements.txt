@@ -1,6 +1,6 @@
 streamlit
 transformers
 torch
-matplotlib
 requests
-adjustText
+adjustText>=0.7
+matplotlib>=3.5
