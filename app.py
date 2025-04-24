@@ -2,10 +2,13 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import cm
+from adjustText import adjust_text
 from datetime import datetime
 from core import analyze_topic
 from config import LANG_TEXT, INDUSTRY_KEYWORDS, COUNTRY_LIST
 from news_sentiment_tool_demo import TOPIC_SETTINGS
+
+WISERBOND_COLOR = "#051F5B"
 
 # 페이지 설정
 st.set_page_config(page_title="Wiserbond News Sentiment Report", layout="wide")
@@ -40,23 +43,24 @@ if "result" in st.session_state:
     analysis_date = st.session_state["timestamp"]
 
     # 스타일
-    st.markdown("""
+    st.markdown(f"""
     <style>
-    body {
+    body {{
         font-family: 'Segoe UI', sans-serif;
         font-size: 0.95rem;
         line-height: 1.6;
         margin: 0 auto;
         padding: 0 1.5rem;
-    }
-    .section-title { font-size:1.3em; font-weight:bold; margin-top:2em; }
-    @media print {
-        .element-container { page-break-inside: avoid; }
-    }
+    }}
+    .section-title {{ font-size:1.3em; font-weight:bold; margin-top:2em; }}
+    h2, h3 {{ color: {WISERBOND_COLOR}; }}
+    @media print {{
+        .element-container {{ page-break-inside: avoid; }}
+    }}
     </style>
     """, unsafe_allow_html=True)
 
-    # 헤더
+    # 보고서 헤더
     st.markdown("## Wiserbond News Synthesizer V2 – Sentiment & Summary Report")
     st.write(f"**Date:** {analysis_date}")
     st.markdown(
@@ -69,7 +73,7 @@ if "result" in st.session_state:
     st.markdown("### 1. Executive Summary")
     st.info(executive_summary)
 
-    # 2. Sector Sentiment Spectrum (깔끔한 디자인 + 크기 축소)
+    # 2. Sector Sentiment Spectrum (with adjustText)
     st.markdown("### 2. Sector Sentiment Spectrum")
 
     col1, col2, col3 = st.columns([1, 7, 1])
@@ -82,21 +86,31 @@ if "result" in st.session_state:
         gradient = np.linspace(0, 1, 256).reshape(1, -1)
         ax.imshow(gradient, aspect='auto', cmap=cm.coolwarm, extent=[0, 1, -0.15, 0.15], alpha=0.2)
         ax.hlines(0, 0, 1, colors="#bbb", linestyles="solid", linewidth=8, zorder=0)
-        ax.plot(overall_score, 0, marker="s", color="black", markersize=12, label="Overall", zorder=4)
+        ax.plot(overall_score, 0, marker="s", color=WISERBOND_COLOR, markersize=12, label="Overall", zorder=4)
 
-        sector_colors = cm.Blues(np.linspace(0.6, 0.9, len(sector_sentiment_scores)))
-        sectors_sorted = sorted(sector_sentiment_scores.items())  # 알파벳 순
+        texts = []
+        sector_colors = [WISERBOND_COLOR] * len(sector_sentiment_scores)
+        sectors_sorted = sorted(sector_sentiment_scores.items(), key=lambda x: x[1])  # 감정 점수 순 정렬
 
         for i, (sector, score) in enumerate(sectors_sorted):
             ax.plot(score, 0, marker="o", color=sector_colors[i], markersize=8, zorder=3)
-            y_offset = 0.22 if i % 2 == 0 else -0.24
-            ax.text(score, y_offset, sector, fontsize=8, ha="center", va="bottom" if y_offset > 0 else "top",
-                    fontweight="medium", color='#444444')
+            text = ax.text(score, 0.25, sector, fontsize=8, ha="center", va="bottom",
+                           fontweight="medium", color=WISERBOND_COLOR)
+            texts.append(text)
+
+        adjust_text(
+            texts,
+            only_move={'points': 'y', 'texts': 'y'},
+            arrowprops=dict(arrowstyle="->", color="#888", lw=0.5),
+            force_text=0.5,
+            expand_text=(1.1, 1.2),
+            expand_points=(1.1, 1.2)
+        )
 
         ax.set_xlim(-0.05, 1.05)
-        ax.set_ylim(-0.35, 0.35)
+        ax.set_ylim(-0.5, 0.6)
         ax.set_xticks([0.0, 0.5, 1.0])
-        ax.set_xticklabels(["Negative", "Neutral", "Positive"], fontsize=9, fontweight="bold")
+        ax.set_xticklabels(["Negative", "Neutral", "Positive"], fontsize=9, fontweight="bold", color=WISERBOND_COLOR)
         ax.set_yticks([])
         for spine in ["top", "right", "left", "bottom"]:
             ax.spines[spine].set_visible(False)
@@ -111,12 +125,11 @@ if "result" in st.session_state:
         sector = item['sector']
         impact = item['impact']
         source = item.get('source', 'Unknown')
-        st.markdown(f"- **{sector}**: {impact} (Source: {source})")
+        st.markdown(f"- **{sector}**: {impact} <span style='color:{WISERBOND_COLOR}'>({source})</span>", unsafe_allow_html=True)
 
     # 4. Wiserbond Interpretation
     st.markdown("### 4. Wiserbond Interpretation")
     st.success(expert_summary)
 
-    # Footer
     st.markdown("---")
     st.markdown("*This report layout is optimized for professional printing and PDF export.*")
