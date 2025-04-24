@@ -6,10 +6,6 @@ from news_sentiment_tool_demo import (
     TOPIC_SETTINGS
 )
 from config import INDUSTRY_KEYWORDS, SECTOR_KEYWORDS
-from transformers import pipeline
-
-# Summarizer for sector impact
-summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
 
 def detect_impacted_sectors(articles):
     impact_map = {}
@@ -23,6 +19,11 @@ def detect_impacted_sectors(articles):
 def summarize_sector_impact(sector_texts):
     if not sector_texts:
         return "No clear impact found."
+
+    # ✅ moved inside function to avoid Streamlit-PyTorch startup conflict
+    from transformers import pipeline
+    summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
+
     text_block = " ".join(sector_texts)[:512]
     try:
         summary = summarizer(text_block, max_length=40, min_length=10, do_sample=False)[0]["summary_text"]
@@ -65,6 +66,7 @@ def analyze_topic(topic, industry, country):
 
     dominant_sentiment = max(sentiment_counts, key=sentiment_counts.get)
     top_issue_summary = "renewed US tariff threats and China's retaliatory stance"
+
     executive_summary = (
         f"Over the past 3 days, news coverage on **{topic}** has been predominantly "
         f"**{dominant_sentiment.lower()}**, with a focus on {top_issue_summary}."
