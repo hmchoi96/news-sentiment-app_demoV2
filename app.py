@@ -1,5 +1,7 @@
 import streamlit as st
 import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import cm
 from datetime import datetime
 from core import analyze_topic
 from config import LANG_TEXT, INDUSTRY_KEYWORDS, COUNTRY_LIST
@@ -67,21 +69,40 @@ if "result" in st.session_state:
     # 1. Executive Summary
     st.markdown("### 1. Executive Summary")
     st.info(executive_summary)
+    
+    # 2. Sector Sentiment Spectrum (Gradient Bar with Sector Points)
+    st.markdown("### 4. Sector Sentiment Spectrum")
 
-    # 2. Sentiment Breakdown (더 작고 얇은 바 차트)
-    st.markdown("### 2. Sentiment Breakdown")
-    filtered_counts = {k: v for k, v in sentiment_counts.items() if k in ["Positive", "Negative"]}
-    fig, ax = plt.subplots(figsize=(2.2, 0.9))
-    ax.bar(filtered_counts.keys(), filtered_counts.values(), color=['#4caf50', '#f44336'])
-    ax.set_ylabel("Articles", fontsize=8)
-    ax.tick_params(axis='x', labelsize=8)
-    ax.tick_params(axis='y', labelsize=7)
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
+    sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
+    all_scores = [sentiment_map.get(a["sentiment"], 0.5) for a in result["positive_news"] + result["negative_news"]]
+    overall_score = sum(all_scores) / len(all_scores)
+
+    fig, ax = plt.subplots(figsize=(7, 1.5), dpi=120)
+    gradient = np.linspace(0, 1, 256).reshape(1, -1)
+    ax.imshow(gradient, aspect='auto', cmap=cm.coolwarm, extent=[0, 1, -0.18, 0.18], alpha=0.25)
+    ax.hlines(0, 0, 1, colors="#bbb", linestyles="solid", linewidth=10, zorder=0)
+    ax.plot(overall_score, 0, marker="s", color="black", markersize=14, label="Overall", zorder=2)
+
+    sector_colors = cm.Blues(np.linspace(0.5, 0.95, len(sector_sentiment_scores)))
+    for i, (sector, score) in enumerate(sector_sentiment_scores.items()):
+        ax.plot(score, 0, marker="o", color=sector_colors[i], markersize=10, zorder=3)
+        y_offset = 0.24 if i % 2 == 0 else -0.28
+        ax.text(score, y_offset, sector, fontsize=9, ha="center", va="bottom" if y_offset > 0 else "top",
+                fontweight="medium", color=sector_colors[i])
+
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.4, 0.4)
+    ax.set_xticks([0.0, 0.5, 1.0])
+    ax.set_xticklabels(["Negative", "Neutral", "Positive"], fontsize=10, fontweight="bold")
+    ax.set_yticks([])
+    for spine in ["top", "right", "left", "bottom"]:
+        ax.spines[spine].set_visible(False)
+
+    ax.legend(["Overall Sentiment"], loc="upper right", frameon=False, fontsize=9)
+    plt.tight_layout()
     st.pyplot(fig)
-
     # 3. Sector Impact Breakdown with source
-    st.markdown("### 3. Sector Impact Breakdown")
+    st.markdown("### 2. Sector Impact Breakdown")
     for item in impact_summary:
         sector = item['sector']
         impact = item['impact']
@@ -89,42 +110,10 @@ if "result" in st.session_state:
         st.markdown(f"- **{sector}**: {impact} (Source: {source})")
 
     # 4. Wiserbond Interpretation
-    st.markdown("### 4. Wiserbond Interpretation")
+    st.markdown("### 3. Wiserbond Interpretation")
     st.success(expert_summary)
 
-    # 5. Sector Sentiment Spectrum Visualization
-    st.markdown("### 5. Sector Sentiment Spectrum")
-    fig, ax = plt.subplots(figsize=(6, 1.2))
-
-    # 기본 스펙트럼 선
-    ax.hlines(0, 0, 1, colors="#ccc", linestyles="solid", linewidth=8)
-
-    # 전체 평균 감정 (■)
-    sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
-    all_scores = [sentiment_map.get(a["sentiment"], 0.5) for a in result["positive_news"] + result["negative_news"]]
-    overall_score = sum(all_scores) / len(all_scores)
-    ax.plot(overall_score, 0, marker="s", color="black", markersize=8, label="Overall")
-
-    # ▲ 섹터별 위치 표시 (위아래 교차)
-    toggle = True
-    for sector, score in sector_sentiment_scores.items():
-        y = 0.25 if toggle else -0.25
-        ax.plot(score, 0, marker="v", color="blue", markersize=6)
-        ax.text(score, y, sector, fontsize=8, ha="center", va="bottom" if toggle else "top")
-        toggle = not toggle
-
-    # 축 정리
-    ax.set_xlim(-0.05, 1.05)
-    ax.set_ylim(-0.4, 0.4)
-    ax.set_xticks([0.0, 0.5, 1.0])
-    ax.set_xticklabels(["Negative", "Neutral", "Positive"], fontsize=8)
-    ax.set_yticks([])
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.spines["left"].set_visible(False)
-    ax.spines["bottom"].set_visible(False)
-
-    st.pyplot(fig)
+   
 
     st.markdown("---")
     st.markdown("*This report layout is optimized for professional printing and PDF export.*")
