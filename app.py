@@ -24,6 +24,9 @@ if st.sidebar.button("Run Analysis"):
     # 세션에 저장
     st.session_state["result"] = result
     st.session_state["timestamp"] = datetime.now().strftime("%B %d, %Y %H:%M")
+    st.session_state["topic_choice"] = topic_choice
+    st.session_state["country_choice"] = country_choice
+    st.session_state["industry_choice"] = industry_choice
 
 # 분석 결과 표시
 if "result" in st.session_state:
@@ -54,37 +57,39 @@ if "result" in st.session_state:
     # 보고서 헤더
     st.markdown("## Wiserbond News Synthesizer V2 – Sentiment & Summary Report")
     st.write(f"**Date:** {analysis_date}")
+    st.markdown(
+        f"<small>Topic: {st.session_state['topic_choice']} | Country: {st.session_state['country_choice']} | Industry: {st.session_state['industry_choice']}</small>",
+        unsafe_allow_html=True
+    )
     st.write("---")
 
     # 1. Executive Summary
     st.markdown("### 1. Executive Summary")
     st.info(executive_summary)
 
-    # 2. Sentiment Breakdown
+    # 2. Sentiment Breakdown (작은 바 차트)
     st.markdown("### 2. Sentiment Breakdown")
-    fig, ax = plt.subplots(figsize=(5, 1.5))
-    colors = ['#4caf50', '#ffc107', '#f44336']
-    ax.bar(sentiment_counts.keys(), sentiment_counts.values(), color=colors)
-    ax.set_ylabel("Article Count")
+    filtered_counts = {k: v for k, v in sentiment_counts.items() if k in ["Positive", "Negative"]}
+    fig, ax = plt.subplots(figsize=(3, 1.2))  # 작게 줄인 그래프
+    ax.bar(filtered_counts.keys(), filtered_counts.values(), color=['#4caf50', '#f44336'])
+    ax.set_ylabel("Articles", fontsize=9)
+    ax.tick_params(axis='x', labelsize=9)
+    ax.tick_params(axis='y', labelsize=8)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     st.pyplot(fig)
 
-    # 3. Sector Impact Breakdown
+    # 3. Sector Impact Breakdown with source
     st.markdown("### 3. Sector Impact Breakdown")
     for item in impact_summary:
-        st.markdown(f"- **{item['sector']}**: {item['impact']}")
+        sector = item['sector']
+        impact = item['impact']
+        source = item.get('source', 'Unknown')
+        st.markdown(f"- **{sector}**: {impact} (Source: {source})")
 
     # 4. Wiserbond Interpretation
     st.markdown("### 4. Wiserbond Interpretation")
     st.success(expert_summary)
-
-    # 5. 분석 조건 요약
-    st.markdown("### 5. Analysis Settings")
-    st.write(f"- **Topic:** {topic_choice}")
-    st.write(f"- **Country:** {country_choice}")
-    st.write(f"- **Industry:** {industry_choice}")
-    st.write(f"- **Language:** {language_choice}")
 
     st.markdown("---")
     st.markdown("*This report layout is optimized for professional printing and PDF export.*")
