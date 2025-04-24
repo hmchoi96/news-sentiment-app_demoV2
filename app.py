@@ -1,8 +1,6 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import cm
-from adjustText import adjust_text
 from datetime import datetime
 from core import analyze_topic
 from config import LANG_TEXT, INDUSTRY_KEYWORDS, COUNTRY_LIST
@@ -52,7 +50,9 @@ if "result" in st.session_state:
         margin: 0 auto;
         padding: 0 1.5rem;
     }}
-    .section-title {{ font-size:1.3em; font-weight:bold; margin-top:2em; }}
+    h2, h3 {{
+        color: {WISERBOND_COLOR};
+    }}
     @media print {{
         .element-container {{ page-break-inside: avoid; }}
     }}
@@ -72,51 +72,44 @@ if "result" in st.session_state:
     st.markdown("### 1. Executive Summary")
     st.info(executive_summary)
 
-    # 2. Sector Sentiment Spectrum (with improved label placement)
+    # 2. Sector Sentiment Spectrum (Structured style)
     st.markdown("### 2. Sector Sentiment Spectrum")
+
     col1, col2, col3 = st.columns([1, 7, 1])
     with col2:
         sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
         all_scores = [sentiment_map.get(a["sentiment"], 0.5) for a in result["positive_news"] + result["negative_news"]]
         overall_score = sum(all_scores) / len(all_scores)
 
-        fig, ax = plt.subplots(figsize=(5, 1.2), dpi=100)
-        gradient = np.linspace(0, 1, 256).reshape(1, -1)
-        ax.imshow(gradient, aspect='auto', cmap=cm.coolwarm, extent=[0, 1, -0.15, 0.15], alpha=0.2)
-        ax.hlines(0, 0, 1, colors="#bbb", linestyles="solid", linewidth=8, zorder=0)
-        ax.plot(overall_score, 0, marker="s", color=WISERBOND_COLOR, markersize=12, label="Overall", zorder=4)
+        fig, ax = plt.subplots(figsize=(6.5, 1.5), dpi=100)
 
-        texts = []
-        sector_colors = [WISERBOND_COLOR] * len(sector_sentiment_scores)
+        # 바 배경
+        ax.hlines(0, 0, 1, colors="#bbb", linewidth=12, zorder=1)
+
+        # 양 끝 감정 심볼
+        ax.text(0, 0.05, "-", fontsize=16, ha="center", va="bottom", color=WISERBOND_COLOR)
+        ax.text(1, 0.05, "+", fontsize=16, ha="center", va="bottom", color=WISERBOND_COLOR)
+
+        # 전체 평균
+        ax.plot(overall_score, 0, marker="s", color=WISERBOND_COLOR, markersize=12, zorder=3)
+
+        # 섹터 점 + 라벨 (화살표)
         sectors_sorted = sorted(sector_sentiment_scores.items(), key=lambda x: x[1])
-
         for i, (sector, score) in enumerate(sectors_sorted):
-            ax.plot(score, 0, marker="o", color=sector_colors[i], markersize=8, zorder=3)
-            y_init = 0.25 if i % 2 == 0 else -0.25
-            text = ax.text(score, y_init, sector, fontsize=8, ha="center",
-                           va="bottom" if y_init > 0 else "top",
-                           fontweight="medium", color=WISERBOND_COLOR)
-            texts.append(text)
-
-        adjust_text(
-            texts,
-            only_move={'points': 'y', 'texts': 'y'},
-            arrowprops=dict(arrowstyle="->", color="#999", lw=0.4),
-            force_text=1.0,
-            expand_text=(1.2, 1.3),
-            expand_points=(1.1, 1.2)
-        )
+            ax.plot(score, 0, marker="o", color=WISERBOND_COLOR, markersize=8, zorder=2)
+            label_y = 0.25 if i % 2 == 0 else -0.3
+            ax.annotate(
+                sector,
+                xy=(score, 0), xytext=(score, label_y),
+                ha="center", va="bottom" if label_y > 0 else "top",
+                fontsize=8, color=WISERBOND_COLOR,
+                arrowprops=dict(arrowstyle="->", color="#999", lw=0.5)
+            )
 
         ax.set_xlim(-0.05, 1.05)
-        ax.set_ylim(-0.5, 0.6)
-        ax.set_xticks([0.0, 0.5, 1.0])
-        ax.set_xticklabels(["Negative", "Neutral", "Positive"], fontsize=9, fontweight="bold", color=WISERBOND_COLOR)
-        ax.set_yticks([])
-        for spine in ["top", "right", "left", "bottom"]:
-            ax.spines[spine].set_visible(False)
-
-        ax.legend(["Overall Sentiment"], loc="upper right", frameon=False, fontsize=8)
-        plt.tight_layout(pad=0.2)
+        ax.set_ylim(-0.45, 0.45)
+        ax.axis('off')
+        plt.tight_layout()
         st.pyplot(fig)
 
     # 3. Sector Impact Breakdown
