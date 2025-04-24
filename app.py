@@ -67,14 +67,14 @@ if "result" in st.session_state:
     st.markdown("### 1. Executive Summary")
     st.info(executive_summary)
 
-    # 2. Sentiment Breakdown (작은 바 차트)
+    # 2. Sentiment Breakdown (더 작고 얇은 바 차트)
     st.markdown("### 2. Sentiment Breakdown")
     filtered_counts = {k: v for k, v in sentiment_counts.items() if k in ["Positive", "Negative"]}
-    fig, ax = plt.subplots(figsize=(3, 1.2))  # 작게 줄인 그래프
+    fig, ax = plt.subplots(figsize=(2.2, 0.9))  # 최소화된 그래프 크기
     ax.bar(filtered_counts.keys(), filtered_counts.values(), color=['#4caf50', '#f44336'])
-    ax.set_ylabel("Articles", fontsize=9)
-    ax.tick_params(axis='x', labelsize=9)
-    ax.tick_params(axis='y', labelsize=8)
+    ax.set_ylabel("Articles", fontsize=8)
+    ax.tick_params(axis='x', labelsize=8)
+    ax.tick_params(axis='y', labelsize=7)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     st.pyplot(fig)
@@ -84,7 +84,7 @@ if "result" in st.session_state:
     for item in impact_summary:
         sector = item['sector']
         impact = item['impact']
-        source = item.get('source', 'Unknown')
+        source = item.get('source', 'Unknown')  # 추후 core.py에서 실제 소스 넣기 가능
         st.markdown(f"- **{sector}**: {impact} (Source: {source})")
 
     # 4. Wiserbond Interpretation
