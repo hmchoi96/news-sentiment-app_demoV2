@@ -2,5 +2,7 @@ streamlit
 transformers
 torch
 requests
+numpy
 adjustText>=0.7
 matplotlib>=3.5
+huggingface_hub[hf_xet]
