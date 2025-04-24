@@ -1,9 +1,13 @@
+import os
+os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
+
 import streamlit as st
 import matplotlib.pyplot as plt
 from datetime import datetime
 from core import analyze_topic
 from config import LANG_TEXT, INDUSTRY_KEYWORDS, COUNTRY_LIST
 from news_sentiment_tool_demo import TOPIC_SETTINGS
+
 
 # 페이지 설정
 st.set_page_config(page_title="Wiserbond News Sentiment Report", layout="wide")
