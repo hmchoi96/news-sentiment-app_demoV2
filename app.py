@@ -1,7 +1,3 @@
-# 🚨 반드시 가장 위에서 설정해야 함!
-import os
-os.environ["STREAMLIT_WATCHER_TYPE"] = "none"  # Prevent torch + streamlit crash
-
 import streamlit as st
 import matplotlib.pyplot as plt
 from datetime import datetime
