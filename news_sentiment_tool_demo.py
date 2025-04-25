@@ -51,10 +51,13 @@ TOPIC_SETTINGS = {
 
 FROM_DATE = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
 
-def get_news(search_term, max_pages=4, page_size=100):
+
+def get_news(search_term, industry_keywords=None, max_pages=4, page_size=100):
     all_articles = []
     base_url = "https://newsapi.org/v2/everything"
-    queries = [search_term]  # ✅ 단일 주제 쿼리만 사용
+    queries = [search_term]
+    if industry_keywords:
+        queries += [f"{search_term} AND {kw}" for kw in industry_keywords]
 
     for q in queries:
         for page in range(1, max_pages + 1):
@@ -68,27 +71,24 @@ def get_news(search_term, max_pages=4, page_size=100):
                 "domains": "reuters.com,bloomberg.com,cnn.com,wsj.com,ft.com,nytimes.com",
                 "apiKey": NEWS_API_KEY
             }
-
             try:
                 response = requests.get(base_url, params=params)
                 data = response.json()
-
                 if 'articles' in data:
                     all_articles.extend(data['articles'])
-
                 if len(data.get("articles", [])) < page_size:
                     break
-
             except Exception as e:
-                print(f"Error fetching query '{q}' on page {page}: {type(e).__name__} - {str(e)}")  # 에러 타입과 메시지 출력
-
+                print(f"Error fetching query '{q}':", e)
     return all_articles
+
 
 def contains_keywords(text, keywords):
     text = (text or "").lower()
     return sum(k in text for k in keywords) >= 1
 
-def filter_articles(articles, base_keywords, industry_keywords=None, min_base_keywords=1, min_industry_keywords=1):  # ✅ 최소 키워드 수 조정
+
+def filter_articles(articles, keywords, max_filtered=50):
     seen_sources = set()
     filtered = []
     for a in articles:
@@ -98,12 +98,13 @@ def filter_articles(articles, base_keywords, industry_keywords=None, min_base_ke
         if not title or not desc:
             continue
         combined = f"{title} {desc}"
-        base_keywords_matched = contains_keywords(combined, base_keywords)
-        industry_keywords_matched = not industry_keywords or contains_keywords(combined, industry_keywords)  # industry_keywords가 없으면 True
-        if base_keywords_matched and industry_keywords_matched and source not in seen_sources:
+        if contains_keywords(combined, keywords) and source not in seen_sources:
             filtered.append(a)
             seen_sources.add(source)
+        if len(filtered) >= max_filtered:
+            break
     return filtered
+
 
 def run_sentiment_analysis(articles):
     sentiment_pipeline = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english", framework="pt")
@@ -120,6 +121,7 @@ def run_sentiment_analysis(articles):
         })
     return results
 
+
 def summarize_by_sentiment(articles, sentiment_label, keywords):
     summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
     texts = [
@@ -132,9 +134,9 @@ def summarize_by_sentiment(articles, sentiment_label, keywords):
         return "No matching articles found for summarization."
 
     chunks = []
+    word_limit = 500
     current_chunk = []
     total_words = 0
-    word_limit = 500
 
     for t in texts:
         w_count = len(t.split())
@@ -150,25 +152,52 @@ def summarize_by_sentiment(articles, sentiment_label, keywords):
     except Exception as e:
         return "Summarization failed due to model input error."
 
+
 def draw_sentiment_chart(articles):
     total = len(articles)
     if total == 0:
         print("No articles to visualize.")
         return
-
     from collections import Counter
     counts = Counter([a['sentiment'] for a in articles])
     labels = ['NEGATIVE', 'NEUTRAL', 'POSITIVE']
     colors = ['#d9534f', '#f7f1f1', '#bfaeff']
     values = [counts.get(label, 0) / total * 100 for label in labels]
-
     plt.figure(figsize=(8, 1.2))
     plt.barh(['Sentiment'], values, color=colors, edgecolor='black', height=0.4, left=[0, values[0], values[0]+values[1]])
-
     for i, (v, label) in enumerate(zip(values, labels)):
         if v > 0:
             plt.text(sum(values[:i]) + v/2, 0, f"{label.title()} {int(v)}%", va='center', ha='center', fontsize=9)
-
     plt.axis('off')
     plt.title("Sentiment Breakdown")
     plt.show()
+
+
+def run_analysis():
+    while True:
+        topic = input("📝 Enter a keyword (Available: tariff, trump, inflation, fed, unemployment): ").strip().lower()
+        if topic not in TOPIC_SETTINGS:
+            print(f"❌ '{topic}' is not available. Please try again.")
+            continue
+        setting = TOPIC_SETTINGS[topic]
+        search_term = setting['search_term']
+        filter_keywords = setting['keywords']
+        raw = get_news(search_term, industry_keywords=filter_keywords)
+        filtered = filter_articles(raw, filter_keywords)
+        analyzed = run_sentiment_analysis(filtered)
+        pos_summary = summarize_by_sentiment(analyzed, 'POSITIVE', filter_keywords)
+        neg_summary = summarize_by_sentiment(analyzed, 'NEGATIVE', filter_keywords)
+        print(f"\n📅 News Summary for the Period: {FROM_DATE} to {datetime.today().strftime('%Y-%m-%d')}")
+        print(f"📊 Analyzed {len(analyzed)} articles from {len(set(a['source'] for a in analyzed))} news sources.\n")
+        print("🤖 AI Summary:")
+        print(f"❗ Negative News: {neg_summary}")
+        print(f"✅ Positive News: {pos_summary}")
+        draw_sentiment_chart(analyzed)
+        again = input("\n🔁 Would you like to analyze another topic? (yes / no): ").strip().lower()
+        if again in ['no', 'n']:
+            print("👋 Analysis finished. Have a great day!")
+            break
+
+# execute
+if __name__ == "__main__":
+    run_analysis()
