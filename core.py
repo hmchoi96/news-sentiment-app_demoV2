@@ -72,8 +72,12 @@ def analyze_topic(topic, industry, country):
     base_keywords = setting["keywords"].copy()
     industry_keywords = INDUSTRY_KEYWORDS.get(industry, []) if industry != "All" else None
 
-    raw = get_news(search_term, industry_keywords=industry_keywords)
-    filtered = filter_articles(raw, base_keywords + (industry_keywords or []))
+    # ✅ industry_keywords를 get_news에서 제거 (단일 쿼리만)
+    raw = get_news(search_term)
+
+    # ✅ 필터링은 base_keywords + industry_keywords 조합으로 진행
+    filtered = filter_articles(raw, base_keywords, industry_keywords)
+
     analyzed = run_sentiment_analysis(filtered)
 
     sentiment_counts = {"Positive": 0, "Neutral": 0, "Negative": 0}
