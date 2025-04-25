@@ -5,15 +5,15 @@ from news_sentiment_tool_demo import (
     summarize_by_sentiment,
     TOPIC_SETTINGS
 )
-from config import INDUSTRY_KEYWORDS, SECTOR_KEYWORDS
+from config import INDUSTRY_KEYWORDS, SECTOR_KEYWORDS, INDUSTRY_SUBSECTORS
 from collections import Counter
 
-def detect_impacted_sectors(articles):
+def detect_impacted_sectors(articles, sector_keywords):
     impact_map = {}
     source_map = {}
     for a in articles:
         text = f"{a['title']} {a.get('description', '')}".lower()
-        for sector, keywords in SECTOR_KEYWORDS.items():
+        for sector, keywords in sector_keywords.items():
             if any(k in text for k in keywords):
                 impact_map.setdefault(sector, []).append(text)
                 source_map.setdefault(sector, []).append(a.get('source', 'Unknown'))
@@ -31,31 +31,29 @@ def summarize_sector_impact(sector_texts):
     except:
         return "Summary model failed."
 
-def compute_sector_sentiment_scores(analyzed, sector_keywords):
+def compute_subsector_sentiment_scores(analyzed, subsector_keywords_dict):
     """
-    섹터별 평균 감정 점수 계산 (NEG=0.0, NEU=0.5, POS=1.0)
-    결과: {"Auto Industry": 0.2, "Policy Dynamics": 0.6, ...}
+    선택된 industry의 subsector 별 감정 점수 계산
     """
     sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
-    sector_scores = {}
-    sector_counts = {}
+    subsector_scores = {}
+    subsector_counts = {}
 
     for a in analyzed:
         text = f"{a['title']} {a.get('description', '')}".lower()
         score = sentiment_map.get(a["sentiment"], 0.5)
-        for sector, keywords in sector_keywords.items():
+        for subsector, keywords in subsector_keywords_dict.items():
             if any(k in text for k in keywords):
-                sector_scores.setdefault(sector, 0.0)
-                sector_counts.setdefault(sector, 0)
-                sector_scores[sector] += score
-                sector_counts[sector] += 1
+                subsector_scores.setdefault(subsector, 0.0)
+                subsector_counts.setdefault(subsector, 0)
+                subsector_scores[subsector] += score
+                subsector_counts[subsector] += 1
 
-    averaged_scores = {
-        sector: (sector_scores[sector] / sector_counts[sector])
-        for sector in sector_scores
+    averaged = {
+        s: (subsector_scores[s] / subsector_counts[s])
+        for s in subsector_scores
     }
-
-    return averaged_scores
+    return averaged
 
 def analyze_topic(topic, industry, country):
     setting = TOPIC_SETTINGS[topic]
@@ -63,7 +61,7 @@ def analyze_topic(topic, industry, country):
     if country != "Global":
         search_term += f" {country}"
 
-    keywords = setting["keywords"]
+    keywords = setting["keywords"].copy()
     if industry != "All":
         keywords += INDUSTRY_KEYWORDS.get(industry, [])
 
@@ -97,8 +95,15 @@ def analyze_topic(topic, industry, country):
         f"**{dominant_sentiment.lower()}**, with a focus on {top_issue_summary}."
     )
 
+    # Subsector 기반 분석
+    subsector_sentiment_scores = {}
+    if industry != "All" and industry in INDUSTRY_SUBSECTORS:
+        subsector_keywords = INDUSTRY_SUBSECTORS[industry]
+        subsector_sentiment_scores = compute_subsector_sentiment_scores(analyzed, subsector_keywords)
+
+    # 기존 섹터 분석 유지 (선택사항)
     impact_summary = []
-    impact_map, source_map = detect_impacted_sectors(analyzed)
+    impact_map, source_map = detect_impacted_sectors(analyzed, SECTOR_KEYWORDS)
     for sector, texts in impact_map.items():
         sources = source_map.get(sector, [])
         most_common_source = Counter(sources).most_common(1)[0][0] if sources else "Unknown"
@@ -107,8 +112,6 @@ def analyze_topic(topic, industry, country):
             "impact": summarize_sector_impact(texts),
             "source": most_common_source
         })
-
-    sector_sentiment_scores = compute_sector_sentiment_scores(analyzed, SECTOR_KEYWORDS)
 
     return {
         "sentiment_counts": sentiment_counts,
@@ -119,5 +122,5 @@ def analyze_topic(topic, industry, country):
         "expert_summary": expert_summary,
         "executive_summary": executive_summary,
         "impact_summary": impact_summary,
-        "sector_sentiment_scores": sector_sentiment_scores
+        "subsector_sentiment_scores": subsector_sentiment_scores  # ✅ 새 필드
     }
