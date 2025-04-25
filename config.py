@@ -8,7 +8,7 @@ LANG_TEXT = {
         "positive_title": "### ✅ Positive Coverage",
         "negative_title": "### ⚠️ Negative Coverage",
         "expert_insight": "## 💡 Wiserbond Interpretation",
-        "footer": "Wiserbond Research · wiserbond.com · hmchoi@wiserbond.com"
+        "footer": "<small>Wiserbond Research · <a href='https://wiserbond.com'>wiserbond.com</a> · hmchoi@wiserbond.com</small>"
     },
     "한국어": {
         "header": "📊 와이저본드 뉴스 감정 분석 리포트",
@@ -17,7 +17,7 @@ LANG_TEXT = {
         "positive_title": "### ✅ 긍정 뉴스 요약",
         "negative_title": "### ⚠️ 부정 뉴스 요약",
         "expert_insight": "## 💡 Wiserbond 해석",
-        "footer": "Wiserbond 리서치 · wiserbond.com · hmchoi@wiserbond.com"
+        "footer": "<small>Wiserbond 리서치 · <a href='https://wiserbond.com'>wiserbond.com</a> · hmchoi@wiserbond.com</small>"
     },
     "Español": {
         "header": "📊 Informe de Sentimiento de Noticias de Wiserbond",
@@ -26,7 +26,7 @@ LANG_TEXT = {
         "positive_title": "### ✅ Cobertura Positiva",
         "negative_title": "### ⚠️ Cobertura Negativa",
         "expert_insight": "## 💡 Interpretación de Wiserbond",
-        "footer": "Investigación Wiserbond · wiserbond.com · hmchoi@wiserbond.com"
+        "footer": "<small>Investigación Wiserbond · <a href='https://wiserbond.com'>wiserbond.com</a> · hmchoi@wiserbond.com</small>"
     }
 }
 
