@@ -7,6 +7,7 @@ from news_sentiment_tool_demo import (
 )
 from config import INDUSTRY_KEYWORDS, SECTOR_KEYWORDS, INDUSTRY_SUBSECTORS
 from collections import Counter
+from transformers import pipeline
 
 def detect_impacted_sectors(articles, sector_keywords):
     impact_map = {}
@@ -22,7 +23,6 @@ def detect_impacted_sectors(articles, sector_keywords):
 def summarize_sector_impact(sector_texts):
     if not sector_texts:
         return "No clear impact found."
-    from transformers import pipeline
     summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
     text_block = " ".join(sector_texts)[:512]
     try:
@@ -55,7 +55,6 @@ def compute_subsector_sentiment_scores(analyzed, subsector_keywords_dict):
 def extract_top_issue_summary(articles):
     if not articles:
         return "global macro concerns"
-    from transformers import pipeline
     summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
     content = " ".join([f"{a['title']}. {a.get('description', '')}" for a in articles])[:512]
     try:
@@ -103,13 +102,11 @@ def analyze_topic(topic, industry, country):
         f"**{dominant_sentiment.lower()}**, with a focus on {top_issue_summary}."
     )
 
-    # Subsector 기반 분석
     subsector_sentiment_scores = {}
     if industry != "All" and industry in INDUSTRY_SUBSECTORS:
         subsector_keywords = INDUSTRY_SUBSECTORS[industry]
         subsector_sentiment_scores = compute_subsector_sentiment_scores(analyzed, subsector_keywords)
 
-    # 기존 섹터 분석 유지 (선택사항)
     impact_summary = []
     impact_map, source_map = detect_impacted_sectors(analyzed, SECTOR_KEYWORDS)
     for sector, texts in impact_map.items():
@@ -118,7 +115,7 @@ def analyze_topic(topic, industry, country):
         impact_summary.append({
             "sector": sector,
             "impact": summarize_sector_impact(texts),
-            "source": most_common_source
+            "source": f"{most_common_source}, {len(texts)} articles"
         })
 
     return {
