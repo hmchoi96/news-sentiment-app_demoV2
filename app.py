@@ -37,7 +37,7 @@ if "result" in st.session_state:
     sentiment_counts = result["sentiment_counts"]
     impact_summary = result["impact_summary"]
     expert_summary = result["expert_summary"]
-    sector_sentiment_scores = result["sector_sentiment_scores"]
+    sector_sentiment_scores = result.get("sector_sentiment_scores", {})  # ✅ 안전한 방식
     analysis_date = st.session_state["timestamp"]
 
     # 스타일
