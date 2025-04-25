@@ -111,4 +111,11 @@ if "result" in st.session_state:
         sector = item['sector']
         impact = item['impact']
         source = item.get('source', 'Unknown')
-        st.markdown(f"- **{sector**
+        st.markdown(f"- **{sector}**: {impact} ({source})", unsafe_allow_html=True)
+
+    # 4. Wiserbond Interpretation
+    st.markdown("### 4. Wiserbond Interpretation")
+    st.success(expert_summary)
+
+    st.markdown("---")
+    st.markdown("*This report layout is optimized for professional printing and PDF export.*")
