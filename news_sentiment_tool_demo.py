@@ -88,7 +88,7 @@ def contains_keywords(text, keywords):
     return sum(k in text for k in keywords) >= 1
 
 
-def filter_articles(articles, keywords, max_filtered=50):
+def filter_articles(articles, keywords, max_filtered=100):
     seen_sources = set()
     filtered = []
     for a in articles:
