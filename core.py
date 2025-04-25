@@ -35,6 +35,7 @@ def compute_subsector_sentiment_scores(analyzed, subsector_keywords_dict):
     sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
     subsector_scores = {}
     subsector_counts = {}
+
     for a in analyzed:
         text = f"{a['title']} {a.get('description', '')}".lower()
         score = sentiment_map.get(a["sentiment"], 0.5)
@@ -49,7 +50,6 @@ def compute_subsector_sentiment_scores(analyzed, subsector_keywords_dict):
         s: (subsector_scores[s] / subsector_counts[s])
         for s in subsector_scores
     }
-
     return averaged
 
 def extract_top_issue_summary(articles):
@@ -68,15 +68,12 @@ def analyze_topic(topic, industry, country):
     search_term = setting["search_term"]
     if country != "Global":
         search_term += f" {country}"
+
     base_keywords = setting["keywords"].copy()
     industry_keywords = INDUSTRY_KEYWORDS.get(industry, []) if industry != "All" else None
 
-    # ✅ industry_keywords를 get_news에서 제거 (단일 쿼리만)
-    raw = get_news(search_term)
-
-    # ✅ 필터링은 base_keywords + industry_keywords 조합으로 진행
-    filtered = filter_articles(raw, base_keywords, industry_keywords)
-
+    raw = get_news(search_term, industry_keywords=industry_keywords)
+    filtered = filter_articles(raw, base_keywords + (industry_keywords or []))
     analyzed = run_sentiment_analysis(filtered)
 
     sentiment_counts = {"Positive": 0, "Neutral": 0, "Negative": 0}
@@ -87,6 +84,7 @@ def analyze_topic(topic, industry, country):
 
     pos_news = [a for a in analyzed if a["sentiment"] == "POSITIVE"]
     neg_news = [a for a in analyzed if a["sentiment"] == "NEGATIVE"]
+
     pos_sources = sorted(set(a["source"] for a in pos_news))
     neg_sources = sorted(set(a["source"] for a in neg_news))
 
