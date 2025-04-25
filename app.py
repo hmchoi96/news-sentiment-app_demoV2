@@ -37,8 +37,13 @@ if "result" in st.session_state:
     sentiment_counts = result["sentiment_counts"]
     impact_summary = result["impact_summary"]
     expert_summary = result["expert_summary"]
-    sector_sentiment_scores = result["sector_sentiment_scores"]
     analysis_date = st.session_state["timestamp"]
+
+    # sector_sentiment_scores가 result에 있는지 확인
+    if "sector_sentiment_scores" in result:
+        sector_sentiment_scores = result["sector_sentiment_scores"]
+    else:
+        sector_sentiment_scores = {}
 
     # 스타일
     st.markdown(f"""
