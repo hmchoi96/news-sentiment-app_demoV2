@@ -72,5 +72,9 @@ SECTOR_KEYWORDS = {
     ],
     "Healthcare & Pharma": [
         "healthcare", "drug", "FDA", "biotech", "vaccine", "clinical trial", "pharma", "hospital"
+    ],
+    "Manufacturing": [
+        "factory", "production", "plant", "assembly", "automation", "manufacturing", "industrial"
     ]
+
 }
