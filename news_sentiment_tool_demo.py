@@ -1,4 +1,3 @@
-# news_sentiment_tool_demo.py
 import requests
 from transformers import pipeline
 from datetime import datetime, timedelta
@@ -52,25 +51,42 @@ TOPIC_SETTINGS = {
 
 FROM_DATE = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
 
-def get_news(search_term, max_pages=4, page_size=100):
+
+def get_news(search_term, industry_keywords=None, max_pages=4, page_size=100):
     all_articles = []
-    for page in range(1, max_pages + 1):
-        url = (
-            f'https://newsapi.org/v2/everything?q={search_term}'
-            f'&from={FROM_DATE}&language=en&pageSize={page_size}&page={page}&sortBy=publishedAt'
-            f'&apiKey={NEWS_API_KEY}'
-        )
-        response = requests.get(url)
-        data = response.json()
-        if 'articles' in data:
-            all_articles.extend(data['articles'])
-        if len(data.get("articles", [])) < page_size:
-            break
+    base_url = "https://newsapi.org/v2/everything"
+    queries = [search_term]
+    if industry_keywords:
+        queries += [f"{search_term} AND {kw}" for kw in industry_keywords]
+
+    for q in queries:
+        for page in range(1, max_pages + 1):
+            params = {
+                "q": q,
+                "language": "en",
+                "sortBy": "publishedAt",
+                "pageSize": page_size,
+                "page": page,
+                "from": FROM_DATE,
+                "domains": "reuters.com,bloomberg.com,cnn.com,wsj.com,ft.com,nytimes.com",
+                "apiKey": NEWS_API_KEY
+            }
+            try:
+                response = requests.get(base_url, params=params)
+                data = response.json()
+                if 'articles' in data:
+                    all_articles.extend(data['articles'])
+                if len(data.get("articles", [])) < page_size:
+                    break
+            except Exception as e:
+                print(f"Error fetching query '{q}':", e)
     return all_articles
+
 
 def contains_keywords(text, keywords):
     text = (text or "").lower()
-    return sum(k in text for k in keywords) >= 1 # 최소 한 개 이상 포함
+    return sum(k in text for k in keywords) >= 1
+
 
 def filter_articles(articles, keywords, max_filtered=50):
     seen_sources = set()
@@ -89,6 +105,7 @@ def filter_articles(articles, keywords, max_filtered=50):
             break
     return filtered
 
+
 def run_sentiment_analysis(articles):
     sentiment_pipeline = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english", framework="pt")
     results = []
@@ -104,6 +121,7 @@ def run_sentiment_analysis(articles):
         })
     return results
 
+
 def summarize_by_sentiment(articles, sentiment_label, keywords):
     summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
     texts = [
@@ -111,7 +129,7 @@ def summarize_by_sentiment(articles, sentiment_label, keywords):
         for a in articles
         if a['sentiment'] == sentiment_label and a['description'] and contains_keywords(f"{a['description']} {a['title']}", keywords)
     ]
-    
+
     if len(texts) < 1:
         return "No matching articles found for summarization."
 
@@ -154,6 +172,7 @@ def draw_sentiment_chart(articles):
     plt.title("Sentiment Breakdown")
     plt.show()
 
+
 def run_analysis():
     while True:
         topic = input("📝 Enter a keyword (Available: tariff, trump, inflation, fed, unemployment): ").strip().lower()
@@ -163,7 +182,7 @@ def run_analysis():
         setting = TOPIC_SETTINGS[topic]
         search_term = setting['search_term']
         filter_keywords = setting['keywords']
-        raw = get_news(search_term)
+        raw = get_news(search_term, industry_keywords=filter_keywords)
         filtered = filter_articles(raw, filter_keywords)
         analyzed = run_sentiment_analysis(filtered)
         pos_summary = summarize_by_sentiment(analyzed, 'POSITIVE', filter_keywords)
