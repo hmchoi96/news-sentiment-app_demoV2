@@ -37,12 +37,8 @@ if "result" in st.session_state:
     sentiment_counts = result["sentiment_counts"]
     impact_summary = result["impact_summary"]
     expert_summary = result["expert_summary"]
+    sector_sentiment_scores = result["sector_sentiment_scores"]
     analysis_date = st.session_state["timestamp"]
-
-    # Subsector 우선 사용
-    subsector_scores = result.get("subsector_sentiment_scores", {})
-    sector_scores = result.get("sector_sentiment_scores", {})
-    use_subsectors = bool(subsector_scores)
 
     # 스타일
     st.markdown(f"""
@@ -74,48 +70,81 @@ if "result" in st.session_state:
 
     # 1. Executive Summary
     st.markdown("### 1. Executive Summary")
-    st.info(executive_summary)
+    if executive_summary:
+        st.info(executive_summary)
+    else:
+        st.warning("Executive summary not available. Please try again with different settings.")
 
-    # 2. Sentiment Spectrum (Subsector → Sector fallback)
-    st.markdown("### 2. Sentiment Spectrum")
-    col1, col2, col3 = st.columns([1, 8, 1])
+    # 2. Sector Sentiment Spectrum
+    st.markdown("### 2. Sector Sentiment Spectrum")
+    col1, col2, col3 = st.columns([1, 7, 1])
     with col2:
-        data_source = subsector_scores if use_subsectors else sector_scores
-        if not data_source:
-            st.warning("No sentiment data available to visualize.")
-        else:
-            labels = list(data_source.keys())
-            scores = list(data_source.values())
-            overall_score = sum(scores) / len(scores) if scores else 0.5
+        if sector_sentiment_scores:
+            # Sector Sentiment Spectrum 그래프 표시 (이전 코드 사용)
+            sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
+            all_scores = [sentiment_map.get(a["sentiment"], 0.5) for a in result["positive_news"] + result["negative_news"]]
+            overall_score = sum(all_scores) / len(all_scores)
 
-            colors = ['#ef6c6c' if s < 0.4 else '#6cadef' if s > 0.6 else '#b8b8b8' for s in scores]
+            fig, ax = plt.subplots(figsize=(6.5, 1.5), dpi=100)
 
-            fig, ax = plt.subplots(figsize=(6, 2.4 + len(labels) * 0.15), dpi=100)
-            ax.barh(labels, scores, height=0.5, color=colors, alpha=0.8)
+            # 감정 바
+            ax.hlines(0, 0, 1, colors="#bbb", linewidth=12, zorder=1)
 
-            ax.axvline(x=0.5, color='gray', linestyle='--', alpha=0.5)
-            ax.axvline(x=overall_score, color=WISERBOND_COLOR, linestyle='-', linewidth=2, label='Overall Sentiment')
+            # 바 양 끝 심볼
+            ax.text(0, 0.05, "-", fontsize=16, ha="center", va="bottom", color=WISERBOND_COLOR)
+            ax.text(1, 0.05, "+", fontsize=16, ha="center", va="bottom", color=WISERBOND_COLOR)
 
-            ax.set_xlim(0, 1)
-            ax.set_xticks([0, 0.5, 1])
-            ax.set_xticklabels(['Negative', 'Neutral', 'Positive'])
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.legend(frameon=False, loc='upper right')
+            # 전체 평균 표시 (■)
+            ax.plot(overall_score, 0, marker="s", color=WISERBOND_COLOR, markersize=12, zorder=3)
+
+            # 섹터 마커와 45도 라벨
+            sectors_sorted = sorted(sector_sentiment_scores.items(), key=lambda x: x[1])
+            for sector, score in sectors_sorted:
+                ax.plot(score, 0, marker="o", color=WISERBOND_COLOR, markersize=8, zorder=2)
+                ax.text(score, -0.22, sector, rotation=45, fontsize=8,
+                        ha="right", va="top", color=WISERBOND_COLOR)
+
+            ax.set_xlim(-0.05, 1.05)
+            ax.set_ylim(-0.5, 0.4)
+            ax.axis("off")
             plt.tight_layout()
             st.pyplot(fig)
+        else:
+            st.info("Sector Sentiment Spectrum not available. Showing the overall sentiment instead.") # subsector가 없으면
+            #산업별 분석 결과를 대신 보여주기
+            sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
+            all_scores = [sentiment_map.get(a["sentiment"], 0.5) for a in result["positive_news"] + result["negative_news"]]
+            overall_score = sum(all_scores) / len(all_scores)
+
+            fig, ax = plt.subplots(figsize=(6.5, 1.5), dpi=100)
+
+            # 감정 바
+            ax.hlines(0, 0, 1, colors="#bbb", linewidth=12, zorder=1)
+
+            # 바 양 끝 심볼
+            ax.text(0, 0.05, "-", fontsize=16, ha="center", va="bottom", color=WISERBOND_COLOR)
+            ax.text(1, 0.05, "+", fontsize=16, ha="center", va="bottom", color=WISERBOND_COLOR)
+
+            # 전체 평균 표시 (■)
+            ax.plot(overall_score, 0, marker="s", color=WISERBOND_COLOR, markersize=12, zorder=3)
 
     # 3. Sector Impact Breakdown
     st.markdown("### 3. Sector Impact Breakdown")
-    for item in impact_summary:
-        sector = item['sector']
-        impact = item['impact']
-        source = item.get('source', 'Unknown')
-        st.markdown(f"- **{sector}**: {impact} ({source})", unsafe_allow_html=True)
+    if impact_summary:
+        for item in impact_summary:
+            sector = item['sector']
+            impact = item['impact']
+            source = item.get('source', 'Unknown')
+            st.markdown(f"- **{sector}**: {impact} ({source})", unsafe_allow_html=True)
+    else:
+        st.info("Sector Impact Breakdown not available. Insufficient data.")
 
     # 4. Wiserbond Interpretation
     st.markdown("### 4. Wiserbond Interpretation")
-    st.success(expert_summary)
+    if expert_summary:
+        st.success(expert_summary)
+    else:
+        st.info("Wiserbond Interpretation not available. Please try again with different settings.")
 
     st.markdown("---")
     st.markdown("*This report layout is optimized for professional printing and PDF export.*")
