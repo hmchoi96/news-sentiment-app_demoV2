@@ -52,12 +52,10 @@ TOPIC_SETTINGS = {
 FROM_DATE = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
 
 
-def get_news(search_term, industry_keywords=None, max_pages=4, page_size=100):
+def get_news(search_term, max_pages=4, page_size=100):
     all_articles = []
     base_url = "https://newsapi.org/v2/everything"
-    queries = [search_term]
-    if industry_keywords:
-        queries += [f"{search_term} AND {kw}" for kw in industry_keywords]
+    queries = [search_term]  # ✅ 단일 주제 쿼리만 사용
 
     for q in queries:
         for page in range(1, max_pages + 1):
@@ -88,7 +86,7 @@ def contains_keywords(text, keywords):
     return sum(k in text for k in keywords) >= 1
 
 
-def filter_articles(articles, keywords, max_filtered=100):
+def filter_articles(articles, base_keywords, industry_keywords=None, max_filtered=100):
     seen_sources = set()
     filtered = []
     for a in articles:
@@ -98,7 +96,9 @@ def filter_articles(articles, keywords, max_filtered=100):
         if not title or not desc:
             continue
         combined = f"{title} {desc}"
-        if contains_keywords(combined, keywords) and source not in seen_sources:
+        if contains_keywords(combined, base_keywords) and \
+           (not industry_keywords or contains_keywords(combined, industry_keywords)) and \
+           source not in seen_sources:
             filtered.append(a)
             seen_sources.add(source)
         if len(filtered) >= max_filtered:
@@ -171,33 +171,3 @@ def draw_sentiment_chart(articles):
     plt.axis('off')
     plt.title("Sentiment Breakdown")
     plt.show()
-
-
-def run_analysis():
-    while True:
-        topic = input("📝 Enter a keyword (Available: tariff, trump, inflation, fed, unemployment): ").strip().lower()
-        if topic not in TOPIC_SETTINGS:
-            print(f"❌ '{topic}' is not available. Please try again.")
-            continue
-        setting = TOPIC_SETTINGS[topic]
-        search_term = setting['search_term']
-        filter_keywords = setting['keywords']
-        raw = get_news(search_term, industry_keywords=filter_keywords)
-        filtered = filter_articles(raw, filter_keywords)
-        analyzed = run_sentiment_analysis(filtered)
-        pos_summary = summarize_by_sentiment(analyzed, 'POSITIVE', filter_keywords)
-        neg_summary = summarize_by_sentiment(analyzed, 'NEGATIVE', filter_keywords)
-        print(f"\n📅 News Summary for the Period: {FROM_DATE} to {datetime.today().strftime('%Y-%m-%d')}")
-        print(f"📊 Analyzed {len(analyzed)} articles from {len(set(a['source'] for a in analyzed))} news sources.\n")
-        print("🤖 AI Summary:")
-        print(f"❗ Negative News: {neg_summary}")
-        print(f"✅ Positive News: {pos_summary}")
-        draw_sentiment_chart(analyzed)
-        again = input("\n🔁 Would you like to analyze another topic? (yes / no): ").strip().lower()
-        if again in ['no', 'n']:
-            print("👋 Analysis finished. Have a great day!")
-            break
-
-# execute
-if __name__ == "__main__":
-    run_analysis()
