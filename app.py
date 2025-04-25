@@ -72,40 +72,32 @@ if "result" in st.session_state:
     st.markdown("### 1. Executive Summary")
     st.info(executive_summary)
 
-    # 2. Sector Sentiment Spectrum (45도 라벨 정리형)
+    # 2. Sector Sentiment Spectrum (Bar Chart, 80% width)
     st.markdown("### 2. Sector Sentiment Spectrum")
-    
-    col1, col2, col3 = st.columns([1, 7, 1])
+    col1, col2, col3 = st.columns([1, 8, 1])
     with col2:
-        sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
-        all_scores = [sentiment_map.get(a["sentiment"], 0.5) for a in result["positive_news"] + result["negative_news"]]
-        overall_score = sum(all_scores) / len(all_scores)
-    
-        fig, ax = plt.subplots(figsize=(6.5, 1.5), dpi=100)
-    
-        # 감정 바
-        ax.hlines(0, 0, 1, colors="#bbb", linewidth=12, zorder=1)
-    
-        # 바 양 끝 심볼
-        ax.text(0, 0.05, "-", fontsize=16, ha="center", va="bottom", color=WISERBOND_COLOR)
-        ax.text(1, 0.05, "+", fontsize=16, ha="center", va="bottom", color=WISERBOND_COLOR)
-    
-        # 전체 평균 표시 (■)
-        ax.plot(overall_score, 0, marker="s", color=WISERBOND_COLOR, markersize=12, zorder=3)
-    
-        # 섹터 마커와 45도 라벨
-        sectors_sorted = sorted(sector_sentiment_scores.items(), key=lambda x: x[1])
-        for sector, score in sectors_sorted:
-            ax.plot(score, 0, marker="o", color=WISERBOND_COLOR, markersize=8, zorder=2)
-            ax.text(score, -0.22, sector, rotation=45, fontsize=8,
-                    ha="right", va="top", color=WISERBOND_COLOR)
-    
-        ax.set_xlim(-0.05, 1.05)
-        ax.set_ylim(-0.5, 0.4)
-        ax.axis("off")
+        sectors = list(sector_sentiment_scores.keys())
+        scores = list(sector_sentiment_scores.values())
+        overall_score = sum(scores) / len(scores)
+
+        # 감정 기반 색상
+        colors = ['#ef6c6c' if s < 0.4 else '#6cadef' if s > 0.6 else '#b8b8b8' for s in scores]
+
+        fig, ax = plt.subplots(figsize=(6, 2.4), dpi=100)
+        ax.barh(sectors, scores, height=0.5, color=colors, alpha=0.7)
+
+        # 중립선 & 평균선
+        ax.axvline(x=0.5, color='gray', linestyle='--', alpha=0.5)
+        ax.axvline(x=overall_score, color=WISERBOND_COLOR, linestyle='-', linewidth=2, label='Overall Sentiment')
+
+        ax.set_xlim(0, 1)
+        ax.set_xticks([0, 0.5, 1])
+        ax.set_xticklabels(['Negative', 'Neutral', 'Positive'])
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.legend(frameon=False, loc='upper right')
         plt.tight_layout()
         st.pyplot(fig)
-
 
     # 3. Sector Impact Breakdown
     st.markdown("### 3. Sector Impact Breakdown")
