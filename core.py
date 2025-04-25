@@ -32,9 +32,6 @@ def summarize_sector_impact(sector_texts):
         return "Summary model failed."
 
 def compute_subsector_sentiment_scores(analyzed, subsector_keywords_dict):
-    """
-    선택된 industry의 subsector 별 감정 점수 계산
-    """
     sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
     subsector_scores = {}
     subsector_counts = {}
@@ -55,18 +52,29 @@ def compute_subsector_sentiment_scores(analyzed, subsector_keywords_dict):
     }
     return averaged
 
+def extract_top_issue_summary(articles):
+    if not articles:
+        return "global macro concerns"
+    from transformers import pipeline
+    summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
+    content = " ".join([f"{a['title']}. {a.get('description', '')}" for a in articles])[:512]
+    try:
+        summary = summarizer(content, max_length=40, min_length=10, do_sample=False)[0]['summary_text']
+        return summary
+    except:
+        return "market events and policy responses"
+
 def analyze_topic(topic, industry, country):
     setting = TOPIC_SETTINGS[topic]
     search_term = setting["search_term"]
     if country != "Global":
         search_term += f" {country}"
 
-    keywords = setting["keywords"].copy()
-    if industry != "All":
-        keywords += INDUSTRY_KEYWORDS.get(industry, [])
+    base_keywords = setting["keywords"].copy()
+    industry_keywords = INDUSTRY_KEYWORDS.get(industry, []) if industry != "All" else None
 
-    raw = get_news(search_term)
-    filtered = filter_articles(raw, keywords)
+    raw = get_news(search_term, industry_keywords=industry_keywords)
+    filtered = filter_articles(raw, base_keywords + (industry_keywords or []))
     analyzed = run_sentiment_analysis(filtered)
 
     sentiment_counts = {"Positive": 0, "Neutral": 0, "Negative": 0}
@@ -83,13 +91,13 @@ def analyze_topic(topic, industry, country):
 
     expert_summary = (
         "✅ **Positive Insight**\n\n"
-        + summarize_by_sentiment(analyzed, "POSITIVE", keywords)
+        + summarize_by_sentiment(analyzed, "POSITIVE", base_keywords)
         + "\n\n❗ **Negative Insight**\n\n"
-        + summarize_by_sentiment(analyzed, "NEGATIVE", keywords)
+        + summarize_by_sentiment(analyzed, "NEGATIVE", base_keywords)
     )
 
     dominant_sentiment = max(sentiment_counts, key=sentiment_counts.get)
-    top_issue_summary = "renewed US tariff threats and China's retaliatory stance"
+    top_issue_summary = extract_top_issue_summary(analyzed)
     executive_summary = (
         f"Over the past 3 days, news coverage on **{topic}** has been predominantly "
         f"**{dominant_sentiment.lower()}**, with a focus on {top_issue_summary}."
@@ -122,5 +130,5 @@ def analyze_topic(topic, industry, country):
         "expert_summary": expert_summary,
         "executive_summary": executive_summary,
         "impact_summary": impact_summary,
-        "subsector_sentiment_scores": subsector_sentiment_scores  # ✅ 새 필드
+        "subsector_sentiment_scores": subsector_sentiment_scores
     }
