@@ -1,92 +1,74 @@
 from news_sentiment_tool_demo import (
+    get_news,
+    filter_articles,
     run_sentiment_analysis,
     summarize_by_sentiment,
     TOPIC_SETTINGS
 )
 from config import INDUSTRY_KEYWORDS, SECTOR_KEYWORDS
-from newsapi import NewsApiClient
-from datetime import datetime, timedelta
+from collections import Counter
 
-# 1. 산업 키워드 기반 뉴스 가져오기
-def get_news(industry_keywords, from_days=1):
-    newsapi = NewsApiClient(api_key="0e28b7f94fc04e6b9d130092886cabc6")  # 실제 API 키로 교체할 것
-
-    query = " OR ".join(industry_keywords)  # ex: "manufacturing OR semiconductor OR supply chain"
-
-    today = datetime.today()
-    from_date = (today - timedelta(days=from_days)).strftime("%Y-%m-%d")
-    to_date = today.strftime("%Y-%m-%d")
-
-    all_articles = newsapi.get_everything(
-        q=query,
-        from_param=from_date,
-        to=to_date,
-        language="en",
-        sort_by="relevancy",
-        page_size=50
-    )
-
-    return all_articles["articles"]
-
-# 2. 키워드 매칭 여부만 체크 (필터링 아님)
-def filter_articles(articles, topic_keywords):
-    filtered = []
-    for a in articles:
-        combined_text = f"{a.get('title', '')} {a.get('description', '')}".lower()
-        is_relevant = any(kw.lower() in combined_text for kw in topic_keywords)
-
-        article = {
-            "title": a.get("title", ""),
-            "description": a.get("description", ""),
-            "url": a.get("url", ""),
-            "publishedAt": a.get("publishedAt", ""),
-            "source": a.get("source", {}).get("name", ""),
-            "is_relevant": is_relevant
-        }
-        filtered.append(article)
-    return filtered
-
-# 3. 산업 섹터 임팩트 탐지
 def detect_impacted_sectors(articles):
     impact_map = {}
+    source_map = {}
     for a in articles:
-        text = f"{a['title']} {a['description'] or ''}".lower()
+        text = f"{a['title']} {a.get('description', '')}".lower()
         for sector, keywords in SECTOR_KEYWORDS.items():
             if any(k in text for k in keywords):
                 impact_map.setdefault(sector, []).append(text)
-    return impact_map
+                source_map.setdefault(sector, []).append(a.get('source', 'Unknown'))
+    return impact_map, source_map
 
-# 4. 섹터별 간단 요약
 def summarize_sector_impact(sector_texts):
     if not sector_texts:
         return "No clear impact found."
-
     from transformers import pipeline
     summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
-
     text_block = " ".join(sector_texts)[:512]
     try:
         summary = summarizer(text_block, max_length=40, min_length=10, do_sample=False)[0]["summary_text"]
         return summary
-    except Exception:
+    except:
         return "Summary model failed."
 
-# 5. 최종 분석 실행
-def analyze_topic(topic, industry, country, from_days=1):
+def compute_sector_sentiment_scores(analyzed, sector_keywords):
+    """
+    섹터별 평균 감정 점수 계산 (NEG=0.0, NEU=0.5, POS=1.0)
+    결과: {"Auto Industry": 0.2, "Policy Dynamics": 0.6, ...}
+    """
+    sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
+    sector_scores = {}
+    sector_counts = {}
+
+    for a in analyzed:
+        text = f"{a['title']} {a.get('description', '')}".lower()
+        score = sentiment_map.get(a["sentiment"], 0.5)
+        for sector, keywords in sector_keywords.items():
+            if any(k in text for k in keywords):
+                sector_scores.setdefault(sector, 0.0)
+                sector_counts.setdefault(sector, 0)
+                sector_scores[sector] += score
+                sector_counts[sector] += 1
+
+    averaged_scores = {
+        sector: (sector_scores[sector] / sector_counts[sector])
+        for sector in sector_scores
+    }
+
+    return averaged_scores
+
+def analyze_topic(topic, industry, country):
     setting = TOPIC_SETTINGS[topic]
-    topic_keywords = setting["keywords"]
+    search_term = setting["search_term"]
+    if country != "Global":
+        search_term += f" {country}"
 
-    # 산업 키워드 준비
+    keywords = setting["keywords"]
     if industry != "All":
-        industry_keywords = INDUSTRY_KEYWORDS.get(industry, [])
-    else:
-        industry_keywords = []
+        keywords += INDUSTRY_KEYWORDS.get(industry, [])
 
-    if not industry_keywords:
-        industry_keywords = ["economy", "business", "industry"]
-
-    raw = get_news(industry_keywords, from_days=from_days)
-    filtered = filter_articles(raw, topic_keywords)
+    raw = get_news(search_term)
+    filtered = filter_articles(raw, keywords)
     analyzed = run_sentiment_analysis(filtered)
 
     sentiment_counts = {"Positive": 0, "Neutral": 0, "Negative": 0}
@@ -103,26 +85,30 @@ def analyze_topic(topic, industry, country, from_days=1):
 
     expert_summary = (
         "✅ **Positive Insight**\n\n"
-        + summarize_by_sentiment(analyzed, "POSITIVE", topic_keywords)
+        + summarize_by_sentiment(analyzed, "POSITIVE", keywords)
         + "\n\n❗ **Negative Insight**\n\n"
-        + summarize_by_sentiment(analyzed, "NEGATIVE", topic_keywords)
+        + summarize_by_sentiment(analyzed, "NEGATIVE", keywords)
     )
 
     dominant_sentiment = max(sentiment_counts, key=sentiment_counts.get)
     top_issue_summary = "renewed US tariff threats and China's retaliatory stance"
-
     executive_summary = (
-        f"Over the past {from_days} day(s), news coverage on **{topic}** has been predominantly "
+        f"Over the past 3 days, news coverage on **{topic}** has been predominantly "
         f"**{dominant_sentiment.lower()}**, with a focus on {top_issue_summary}."
     )
 
     impact_summary = []
-    detected = detect_impacted_sectors(filtered)
-    for sector, texts in detected.items():
+    impact_map, source_map = detect_impacted_sectors(analyzed)
+    for sector, texts in impact_map.items():
+        sources = source_map.get(sector, [])
+        most_common_source = Counter(sources).most_common(1)[0][0] if sources else "Unknown"
         impact_summary.append({
             "sector": sector,
-            "impact": summarize_sector_impact(texts)
+            "impact": summarize_sector_impact(texts),
+            "source": most_common_source
         })
+
+    sector_sentiment_scores = compute_sector_sentiment_scores(analyzed, SECTOR_KEYWORDS)
 
     return {
         "sentiment_counts": sentiment_counts,
@@ -132,5 +118,6 @@ def analyze_topic(topic, industry, country, from_days=1):
         "negative_sources": neg_sources,
         "expert_summary": expert_summary,
         "executive_summary": executive_summary,
-        "impact_summary": impact_summary
+        "impact_summary": impact_summary,
+        "sector_sentiment_scores": sector_sentiment_scores
     }
