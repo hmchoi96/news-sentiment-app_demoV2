@@ -80,35 +80,36 @@ if "result" in st.session_state:
     st.markdown("### 2. Sentiment Spectrum")
     col1, col2, col3 = st.columns([1, 8, 1])
     with col2:
-    data_source = subsector_scores if use_subsectors else sector_scores
-    if not data_source:
-        st.warning("No sentiment data available to visualize.")
-    else:
-        labels = list(data_source.keys())
-        scores = list(data_source.values())
-        overall_score = sum(scores) / len(scores) if scores else 0.5
+        data_source = subsector_scores if use_subsectors else sector_scores
+        if not data_source:
+            st.warning("No sentiment data available to visualize.")
+        else:
+            labels = list(data_source.keys())
+            scores = list(data_source.values())
+            overall_score = sum(scores) / len(scores) if scores else 0.5
+    
+            # 색상 매핑: 점수에 따라 색 다르게
+            colors = ['#ef6c6c' if s < 0.4 else '#6cadef' if s > 0.6 else '#b8b8b8' for s in scores]
+    
+            # 그래프
+            fig, ax = plt.subplots(figsize=(6, 2.4 + len(labels) * 0.15), dpi=100)
+            ax.barh(labels, scores, height=0.5, color=colors, alpha=0.8)
+    
+            # 기준선 (Neutral, Overall Sentiment)
+            ax.axvline(x=0.5, color='gray', linestyle='--', alpha=0.5)
+            ax.axvline(x=overall_score, color=WISERBOND_COLOR, linestyle='-', linewidth=2, label='Overall Sentiment')
+    
+            ax.set_xlim(0, 1)
+            ax.set_xticks([0, 0.5, 1])
+            ax.set_xticklabels(['Negative', 'Neutral', 'Positive'])
+    
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.legend(frameon=False, loc='upper right')
+            plt.tight_layout()
+    
+            st.pyplot(fig)
 
-        # 색상 매핑: 점수에 따라 색 다르게
-        colors = ['#ef6c6c' if s < 0.4 else '#6cadef' if s > 0.6 else '#b8b8b8' for s in scores]
-
-        # 그래프
-        fig, ax = plt.subplots(figsize=(6, 2.4 + len(labels) * 0.15), dpi=100)
-        ax.barh(labels, scores, height=0.5, color=colors, alpha=0.8)
-
-        # 기준선 (Neutral, Overall Sentiment)
-        ax.axvline(x=0.5, color='gray', linestyle='--', alpha=0.5)
-        ax.axvline(x=overall_score, color=WISERBOND_COLOR, linestyle='-', linewidth=2, label='Overall Sentiment')
-
-        ax.set_xlim(0, 1)
-        ax.set_xticks([0, 0.5, 1])
-        ax.set_xticklabels(['Negative', 'Neutral', 'Positive'])
-
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.legend(frameon=False, loc='upper right')
-        plt.tight_layout()
-
-        st.pyplot(fig)
 
 
     # 3. Sector Impact Breakdown
