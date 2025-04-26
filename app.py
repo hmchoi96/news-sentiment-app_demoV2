@@ -37,12 +37,8 @@ if "result" in st.session_state:
     sentiment_counts = result["sentiment_counts"]
     impact_summary = result["impact_summary"]
     expert_summary = result["expert_summary"]
+    sector_sentiment_scores = result["sector_sentiment_scores"]
     analysis_date = st.session_state["timestamp"]
-
-    # Subsector 우선 사용
-    subsector_scores = result.get("subsector_sentiment_scores", {})
-    sector_scores = result.get("sector_sentiment_scores", {})
-    use_subsectors = bool(subsector_scores)
 
     # 스타일
     st.markdown(f"""
@@ -76,41 +72,32 @@ if "result" in st.session_state:
     st.markdown("### 1. Executive Summary")
     st.info(executive_summary)
 
-    # 2. Sentiment Spectrum (Subsector → Sector fallback)
-    st.markdown("### 2. Sentiment Spectrum")
+    # 2. Sector Sentiment Spectrum (Bar Chart, 80% width)
+    st.markdown("### 2. Sector Sentiment Spectrum")
     col1, col2, col3 = st.columns([1, 8, 1])
     with col2:
-        data_source = subsector_scores if use_subsectors else sector_scores
-        if not data_source:
-            st.warning("No sentiment data available to visualize.")
-        else:
-            labels = list(data_source.keys())
-            scores = list(data_source.values())
-            overall_score = sum(scores) / len(scores) if scores else 0.5
-    
-            # 색상 매핑: 점수에 따라 색 다르게
-            colors = ['#ef6c6c' if s < 0.4 else '#6cadef' if s > 0.6 else '#b8b8b8' for s in scores]
-    
-            # 그래프
-            fig, ax = plt.subplots(figsize=(6, 2.4 + len(labels) * 0.15), dpi=100)
-            ax.barh(labels, scores, height=0.5, color=colors, alpha=0.8)
-    
-            # 기준선 (Neutral, Overall Sentiment)
-            ax.axvline(x=0.5, color='gray', linestyle='--', alpha=0.5)
-            ax.axvline(x=overall_score, color=WISERBOND_COLOR, linestyle='-', linewidth=2, label='Overall Sentiment')
-    
-            ax.set_xlim(0, 1)
-            ax.set_xticks([0, 0.5, 1])
-            ax.set_xticklabels(['Negative', 'Neutral', 'Positive'])
-    
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.legend(frameon=False, loc='upper right')
-            plt.tight_layout()
-    
-            st.pyplot(fig)
+        sectors = list(sector_sentiment_scores.keys())
+        scores = list(sector_sentiment_scores.values())
+        overall_score = sum(scores) / len(scores)
 
+        # 감정 기반 색상
+        colors = ['#ef6c6c' if s < 0.4 else '#6cadef' if s > 0.6 else '#b8b8b8' for s in scores]
 
+        fig, ax = plt.subplots(figsize=(6, 2.4), dpi=100)
+        ax.barh(sectors, scores, height=0.5, color=colors, alpha=0.7)
+
+        # 중립선 & 평균선
+        ax.axvline(x=0.5, color='gray', linestyle='--', alpha=0.5)
+        ax.axvline(x=overall_score, color=WISERBOND_COLOR, linestyle='-', linewidth=2, label='Overall Sentiment')
+
+        ax.set_xlim(0, 1)
+        ax.set_xticks([0, 0.5, 1])
+        ax.set_xticklabels(['Negative', 'Neutral', 'Positive'])
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.legend(frameon=False, loc='upper right')
+        plt.tight_layout()
+        st.pyplot(fig)
 
     # 3. Sector Impact Breakdown
     st.markdown("### 3. Sector Impact Breakdown")
