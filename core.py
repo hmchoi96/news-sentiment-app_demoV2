@@ -20,7 +20,6 @@ def summarize_sector_impact(sector_texts):
     if not sector_texts:
         return "No clear impact found."
 
-    # ✅ moved inside function to avoid Streamlit-PyTorch startup conflict
     from transformers import pipeline
     summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
 
@@ -85,8 +84,3 @@ def analyze_topic(topic, industry, country):
         "positive_news": pos_news,
         "negative_news": neg_news,
         "positive_sources": pos_sources,
-        "negative_sources": neg_sources,
-        "expert_summary": expert_summary,
-        "executive_summary": executive_summary,
-        "impact_summary": impact_summary
-    }
