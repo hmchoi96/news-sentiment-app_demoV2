@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 # 1. 산업 키워드 기반 뉴스 가져오기
 def get_news(industry_keywords, from_days=1):
-    newsapi = NewsApiClient(api_key="YOUR_API_KEY")  # 실제 API 키로 교체할 것
+    newsapi = NewsApiClient(api_key="0e28b7f94fc04e6b9d130092886cabc6")  # 실제 API 키로 교체할 것
 
     query = " OR ".join(industry_keywords)  # ex: "manufacturing OR semiconductor OR supply chain"
 
