@@ -38,6 +38,38 @@ INDUSTRY_KEYWORDS = {
     "Manufacturing": ["factory", "production", "plant", "assembly", "automation", "capacity"]
 }
 
+INDUSTRY_SUBSECTORS = {
+    "Manufacturing": {
+        "Aerospace and Defence": ["aerospace", "defence", "military production"],
+        "Automotive": ["automotive", "vehicle", "car", "EV", "battery"],
+        "Life Sciences and Biomanufacturing": ["biomanufacturing", "life sciences", "biotech"],
+        "Chemicals": ["chemical", "chemicals", "industrial chemicals"],
+        "Hydrogen and Fuel Cells": ["hydrogen", "fuel cell", "H2"],
+        "Medical Devices": ["medical device", "surgical", "implant"],
+        "Plastics": ["plastic", "polymer", "synthetic material"]
+    },
+    "Finance": {
+        "Banking": ["bank", "lending", "mortgage", "loan"],
+        "Capital Markets": ["stock", "equity", "IPO", "bond", "debt"],
+        "Insurance": ["insurance", "risk premium", "claim", "policyholder"]
+    },
+    "Retail": {
+        "E-Commerce": ["e-commerce", "online retail", "checkout", "digital sales"],
+        "Brick-and-Mortar": ["store", "in-store", "mall", "foot traffic"],
+        "Luxury Goods": ["luxury", "brand", "high-end", "designer"]
+    },
+    "Supply Chain": {
+        "Shipping & Ports": ["shipping", "port", "marine", "container", "vessel"],
+        "Logistics": ["freight", "logistics", "delivery", "trucking"],
+        "Warehousing": ["warehouse", "inventory", "distribution center"]
+    },
+    "Consulting": {
+        "Strategy Consulting": ["strategy", "transformation", "operating model"],
+        "IT Consulting": ["system integration", "ERP", "digital consulting"],
+        "Management Consulting": ["change management", "business process", "org design"]
+    }
+}
+
 COUNTRY_LIST = ["Global", "United States", "Canada", "Japan", "China", "Germany", "India", "South Korea"]
 
 SECTOR_KEYWORDS = {
@@ -70,5 +102,8 @@ SECTOR_KEYWORDS = {
     ],
     "Healthcare & Pharma": [
         "healthcare", "drug", "FDA", "biotech", "vaccine", "clinical trial", "pharma", "hospital"
+    ],
+    "Manufacturing": [
+        "factory", "production", "plant", "assembly", "automation", "manufacturing", "industrial"
     ]
 }
