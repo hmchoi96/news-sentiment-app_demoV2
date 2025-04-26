@@ -80,28 +80,8 @@ if "result" in st.session_state:
     if sector_sentiment_scores:
         col1, col2, col3 = st.columns([1, 8, 1])
         with col2:
-            sectors = list(sector_sentiment_scores.keys())
-            scores = list(sector_sentiment_scores.values())
-            overall_score = sum(scores) / len(scores) if scores else 0.5
+            draw_sentiment_chart(sector_sentiment_scores)
 
-            # 색상: 부정/중립/긍정
-            colors = ['#ef6c6c' if s < 0.4 else '#6cadef' if s > 0.6 else '#b8b8b8' for s in scores]
-
-            fig, ax = plt.subplots(figsize=(6, 2.4), dpi=100)
-            ax.barh(sectors, scores, height=0.5, color=colors, alpha=0.8)
-
-            # 기준선
-            ax.axvline(x=0.5, color='gray', linestyle='--', alpha=0.5)
-            ax.axvline(x=overall_score, color=WISERBOND_COLOR, linestyle='-', linewidth=2, label='Overall Sentiment')
-
-            ax.set_xlim(0, 1)
-            ax.set_xticks([0, 0.5, 1])
-            ax.set_xticklabels(['Negative', 'Neutral', 'Positive'])
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.legend(frameon=False, loc='lower right')
-            plt.tight_layout()
-            st.pyplot(fig)
     else:
         st.warning("No sector sentiment data available.")
 
@@ -117,11 +97,17 @@ if "result" in st.session_state:
         st.info("No sector impact summaries available.")
 
     # 4. Wiserbond Interpretation
+# 4. Wiserbond Interpretation
     st.markdown("### 4. Wiserbond Interpretation")
     if expert_summary:
-        st.success(expert_summary)
+        st.markdown("✅ **Positive Insight**")
+        st.success(expert_summary.get('positive_summary', 'No positive insights found.'))
+    
+        st.markdown("❗ **Negative Insight**")
+        st.warning(expert_summary.get('negative_summary', 'No negative insights found.'))
     else:
         st.info("No expert interpretation available.")
+
 
     st.markdown("---")
     st.markdown("*This report layout is optimized for professional printing and PDF export.*")
