@@ -1,7 +1,9 @@
+
 # ui_components.py
 import streamlit as st
 import matplotlib.pyplot as plt
 from collections import Counter
+WISERBOND_COLOR = "#051F5B"
 
 def display_news_section(label, news_list, max_visible=3):
     if not news_list:
@@ -26,22 +28,32 @@ def display_news_section(label, news_list, max_visible=3):
                 st.markdown(f"**Summary:** {news['description']}")
                 st.write("---")
 
-def draw_sentiment_chart(articles):
-    total = len(articles)
-    if total == 0:
-        st.write("No articles to visualize.")
+def draw_sentiment_chart(sector_sentiment_scores):
+    """섹터별 평균 감정 점수 그래프"""
+    if not sector_sentiment_scores:
+        st.write("No sector sentiment scores to visualize.")
         return
-    counts = Counter([a['sentiment'] for a in articles])
-    labels = ['NEGATIVE', 'NEUTRAL', 'POSITIVE']
-    colors = ['#d9534f', '#f7f1f1', '#bfaeff']
-    values = [counts.get(label, 0) / total * 100 for label in labels]
 
-    plt.figure(figsize=(8, 1.2))
-    plt.barh(['Sentiment'], values, color=colors, edgecolor='black', height=0.4,
-             left=[0, values[0], values[0]+values[1]])
-    for i, (v, label) in enumerate(zip(values, labels)):
-        if v > 0:
-            plt.text(sum(values[:i]) + v/2, 0, f"{label.title()} {int(v)}%", va='center', ha='center', fontsize=9)
-    plt.axis('off')
-    plt.title("Sentiment Breakdown")
-    st.pyplot(plt)
+    sectors = list(sector_sentiment_scores.keys())
+    scores = list(sector_sentiment_scores.values())
+    overall_score = sum(scores) / len(scores) if scores else 0.5
+
+    # 색상: 부정/중립/긍정
+    colors = ['#ef6c6c' if s < 0.4 else '#6cadef' if s > 0.6 else '#b8b8b8' for s in scores]
+
+    fig, ax = plt.subplots(figsize=(6, 2.4), dpi=100)
+    ax.barh(sectors, scores, height=0.5, color=colors, alpha=0.8)
+
+    # 기준선
+    ax.axvline(x=0.5, color='gray', linestyle='--', alpha=0.5)
+    ax.axvline(x=overall_score, color=WISERBOND_COLOR, linestyle='-', linewidth=2, label='Overall Sentiment')
+
+    ax.set_xlim(0, 1)
+    ax.set_xticks([0, 0.5, 1])
+    ax.set_xticklabels(['Negative', 'Neutral', 'Positive'])
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.legend(frameon=False, loc='lower right')
+    plt.tight_layout()
+    st.pyplot(fig)
+
