@@ -27,7 +27,7 @@ def summarize_sector_impact(sector_texts):
     try:
         summary = summarizer(text_block, max_length=40, min_length=10, do_sample=False)[0]["summary_text"]
         return summary
-    except:
+    except Exception:
         return "Summary model failed."
 
 def analyze_topic(topic, industry, country):
@@ -84,3 +84,8 @@ def analyze_topic(topic, industry, country):
         "positive_news": pos_news,
         "negative_news": neg_news,
         "positive_sources": pos_sources,
+        "negative_sources": neg_sources,
+        "expert_summary": expert_summary,
+        "executive_summary": executive_summary,
+        "impact_summary": impact_summary
+    }
