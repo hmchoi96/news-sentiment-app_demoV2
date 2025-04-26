@@ -51,6 +51,32 @@ if "result" in st.session_state:
     ax.spines['right'].set_visible(False)
     st.pyplot(fig)
 
+    # 📊 2-1. Sector Sentiment Spectrum Chart
+    if "sector_sentiment_scores" in result:
+        st.markdown("### 2. Sector Sentiment Spectrum")
+
+        sector_scores = result["sector_sentiment_scores"]
+        overall_sentiment = sum(sector_scores.values()) / len(sector_scores) if sector_scores else 0
+
+        sector_names = list(sector_scores.keys())
+        scores = list(sector_scores.values())
+        colors = [
+            "#D3D3D3" if s == 0 else
+            "#ADD8E6" if s > 0 else
+            "#F08080" for s in scores
+        ]
+
+        fig, ax = plt.subplots(figsize=(8, 4.5))
+        ax.barh(sector_names, scores, color=colors)
+        ax.axvline(0, color="gray", linestyle="--", linewidth=1)
+        ax.axvline(overall_sentiment, color="#051F5B", linewidth=2, label="Overall Sentiment")
+        ax.set_xlim(-1, 1)
+        ax.set_xlabel("Sentiment")
+        ax.set_title("2. Sector Sentiment Spectrum")
+        ax.legend()
+        ax.invert_yaxis()
+        st.pyplot(fig)
+
     st.markdown("### 3. Sector Impact Breakdown")
     for item in impact_summary:
         st.markdown(f"- **{item['sector']}**: {item['impact']}")
