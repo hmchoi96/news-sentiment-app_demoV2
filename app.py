@@ -6,6 +6,7 @@ from datetime import datetime
 from core import analyze_topic
 from config import LANG_TEXT, INDUSTRY_KEYWORDS, COUNTRY_LIST
 from news_sentiment_tool_demo import TOPIC_SETTINGS
+from ui_components import display_news_section, draw_sentiment_chart
 
 WISERBOND_COLOR = "#051F5B"
 
