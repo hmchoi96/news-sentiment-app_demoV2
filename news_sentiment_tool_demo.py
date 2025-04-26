@@ -6,47 +6,7 @@ from datetime import datetime, timedelta
 NEWS_API_KEY = '0e28b7f94fc04e6b9d130092886cabc6'
 
 # ✅ Topic 설정
-TOPIC_SETTINGS = {
-    "tariff": {
-        "search_term": "tariff",
-        "keywords": [
-            "tariff", "tariffs", "duties", "customs", "import", "export", "trade",
-            "sanction", "levy", "protectionism", "trade war", "tariff hike",
-            "border tax", "retaliatory", "quota"
-        ]
-    },
-    "trump": {
-        "search_term": "Donald Trump",
-        "keywords": [
-            "trump", "donald", "republican", "president", "white house",
-            "gop", "maga", "trump administration", "former president",
-            "2024 election", "trump rally", "indictment", "mar-a-lago"
-        ]
-    },
-    "inflation": {
-        "search_term": "inflation",
-        "keywords": [
-            "inflation", "price index", "cpi", "ppi", "consumer price", "core inflation",
-            "cost of living", "rising prices", "inflationary pressure",
-            "interest rates", "wage growth", "monetary tightening", "headline inflation",
-            "economic overheating", "sticky inflation", "disinflation"
-        ]
-    },
-    "fed": {
-        "search_term": "fed",
-        "keywords": [
-            "federal reserve", "interest rate", "rate hike", "rate cut", "jerome powell",
-            "fed", "fomc", "central bank", "tightening", "pause", "pivot", "monetary policy"
-        ]
-    },
-    "unemployment": {
-        "search_term": "employment",
-        "keywords": [
-            "unemployment", "employment", "jobless", "nonfarm payroll", "labor market", "jobs report",
-            "layoffs", "job cuts", "hiring freeze", "job growth", "employment rate"
-        ]
-    }
-}
+TOPIC_SETTINGS = { ... (생략: 네꺼 그대로) ... }
 
 # ✅ 기본 날짜 범위 설정 (3일 전부터)
 FROM_DATE = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
@@ -68,12 +28,15 @@ def get_news(search_term, max_pages=4, page_size=100):
             break
     return all_articles
 
-# ✅ 키워드 포함 여부 확인
+# ✅ 키워드 포함 여부 + 광고 제거
 def contains_keywords(text, keywords):
     text = (text or "").lower()
-    return sum(k in text for k in keywords) >= 1
+    noise_words = ["sale", "discount", "free shipping", "coupon", "limited offer", "deal", "shopping", "buy now"]
+    keyword_match = any(k in text for k in keywords)
+    noise_match = any(nw in text for nw in noise_words)
+    return keyword_match and not noise_match
 
-# ✅ 기사 필터링 (중복 소스 제거, 키워드 매칭)
+# ✅ 기사 필터링 (중복 소스 제거)
 def filter_articles(articles, keywords, max_filtered=50):
     seen_sources = set()
     filtered = []
@@ -81,7 +44,7 @@ def filter_articles(articles, keywords, max_filtered=50):
         source = a.get('source', {}).get('name', 'Unknown')
         title = a.get('title', '')
         desc = a.get('description', '')
-        if not title or not desc:
+        if not title or not desc or source == 'Unknown':
             continue
         combined = f"{title} {desc}"
         if contains_keywords(combined, keywords) and source not in seen_sources:
@@ -104,7 +67,7 @@ def run_sentiment_analysis(articles):
     for a in articles:
         text = f"{a['title']}. {a['description']}"
         try:
-            sentiment = sentiment_pipeline(text[:512])[0]  # 너무 긴 경우 방지
+            sentiment = sentiment_pipeline(text[:512])[0]
         except Exception:
             sentiment = {"label": "NEUTRAL", "score": 0.5}
 
