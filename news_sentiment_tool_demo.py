@@ -1,12 +1,11 @@
 import requests
 from transformers import pipeline
 from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
 
 # ✅ API Key
 NEWS_API_KEY = '0e28b7f94fc04e6b9d130092886cabc6'
 
-# ✅ Keyword Setting
+# ✅ Topic 설정
 TOPIC_SETTINGS = {
     "tariff": {
         "search_term": "tariff",
@@ -49,8 +48,10 @@ TOPIC_SETTINGS = {
     }
 }
 
+# ✅ 기본 날짜 범위 설정 (3일 전부터)
 FROM_DATE = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
 
+# ✅ 뉴스 수집
 def get_news(search_term, max_pages=4, page_size=100):
     all_articles = []
     for page in range(1, max_pages + 1):
@@ -67,42 +68,56 @@ def get_news(search_term, max_pages=4, page_size=100):
             break
     return all_articles
 
+# ✅ 키워드 포함 여부 확인
 def contains_keywords(text, keywords):
     text = (text or "").lower()
     return sum(k in text for k in keywords) >= 1
 
+# ✅ 기사 필터링 (중복 소스 제거, 키워드 매칭)
 def filter_articles(articles, keywords, max_filtered=50):
     seen_sources = set()
     filtered = []
     for a in articles:
-        source = a['source']['name']
-        title = a['title']
-        desc = a['description']
+        source = a.get('source', {}).get('name', 'Unknown')
+        title = a.get('title', '')
+        desc = a.get('description', '')
         if not title or not desc:
             continue
         combined = f"{title} {desc}"
         if contains_keywords(combined, keywords) and source not in seen_sources:
-            filtered.append(a)
+            filtered.append({
+                "title": title,
+                "description": desc,
+                "publishedAt": a.get('publishedAt', ''),
+                "source": source,
+                "url": a.get('url', '')
+            })
             seen_sources.add(source)
         if len(filtered) >= max_filtered:
             break
     return filtered
 
+# ✅ 감성 분석 실행
 def run_sentiment_analysis(articles):
     sentiment_pipeline = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english", framework="pt")
     results = []
     for a in articles:
-        text = f"{a['title']}. {a['description'] or ''}"
-        sentiment = sentiment_pipeline(text)[0]
+        text = f"{a['title']}. {a['description']}"
+        try:
+            sentiment = sentiment_pipeline(text[:512])[0]  # 너무 긴 경우 방지
+        except Exception:
+            sentiment = {"label": "NEUTRAL", "score": 0.5}
+
         results.append({
-            "source": a['source']['name'],
-            "title": a['title'],
-            "description": a['description'],
+            "source": a.get('source', 'Unknown'),
+            "title": a.get('title', ''),
+            "description": a.get('description', ''),
             "sentiment": sentiment['label'],
             "score": round(sentiment['score'], 2)
         })
     return results
 
+# ✅ 감성별 요약 생성
 def summarize_by_sentiment(articles, sentiment_label, keywords):
     summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
     texts = [
