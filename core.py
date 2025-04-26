@@ -72,7 +72,7 @@ def analyze_topic(topic, industry, country):
     )
 
     impact_summary = []
-    detected = detect_impacted_sectors(analyzed)
+    detected = detect_impacted_sectors(filtered)  # ✅ 수정: analyzed ➔ filtered
     for sector, texts in detected.items():
         impact_summary.append({
             "sector": sector,
