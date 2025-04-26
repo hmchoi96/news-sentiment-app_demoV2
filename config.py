@@ -1,4 +1,3 @@
-
 # config.py
 
 LANG_TEXT = {
@@ -41,7 +40,6 @@ INDUSTRY_KEYWORDS = {
 
 COUNTRY_LIST = ["Global", "United States", "Canada", "Japan", "China", "Germany", "India", "South Korea"]
 
-# 확장된 SECTOR_KEYWORDS: 각 섹터별 키워드 정의
 SECTOR_KEYWORDS = {
     "Semiconductor Industry": [
         "semiconductor", "chip", "fab", "TSMC", "ASML", "foundry", "wafer", "lithography"
