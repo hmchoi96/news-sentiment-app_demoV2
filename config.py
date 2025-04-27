@@ -74,36 +74,47 @@ COUNTRY_LIST = ["Global", "United States", "Canada", "Japan", "China", "Germany"
 
 SECTOR_KEYWORDS = {
     "Semiconductor Industry": [
-        "semiconductor", "chip", "fab", "TSMC", "ASML", "foundry", "wafer", "lithography"
+        "semiconductor", "chip", "fab", "TSMC", "ASML", "foundry", "wafer", "lithography",
+        "chip manufacturing", "semiconductor production", "fabless", "node shrink", "5nm process", "advanced packaging"
     ],
     "Global Supply Chains": [
-        "supply chain", "logistics", "container", "shipping delay", "port", "disruption", "transport"
+        "supply chain", "logistics", "container", "shipping delay", "port", "disruption", "transport",
+        "bottleneck", "supply disruption", "shipping crisis", "port congestion", "freight rates", "backlog"
     ],
     "Financial Markets": [
-        "stock", "indices", "bonds", "equity", "volatility", "nasdaq", "dow", "s&p", "market sentiment"
+        "stock", "indices", "bonds", "equity", "volatility", "nasdaq", "dow", "s&p", "market sentiment",
+        "sell-off", "market crash", "yield curve", "bull market", "bear market", "quantitative tightening", "risk-off"
     ],
     "Policy Dynamics": [
-        "tariff", "sanction", "retaliation", "trade war", "regulation", "geopolitics", "white house"
+        "tariff", "sanction", "retaliation", "trade war", "regulation", "geopolitics", "white house",
+        "tariff policy", "economic retaliation", "protectionism", "trade barrier", "import duties", "tariff exemption"
     ],
     "Auto Industry": [
-        "automotive", "EV", "car sales", "battery", "tesla", "BYD", "charging station", "recall"
+        "automotive", "EV", "car sales", "battery", "tesla", "BYD", "charging station", "recall",
+        "self-driving", "auto manufacturing", "electric mobility", "autonomous driving", "fleet sales"
     ],
     "Retail & Consumer": [
-        "retail", "consumer spending", "ecommerce", "mall", "shopping", "sales growth", "luxury demand"
+        "retail", "consumer spending", "ecommerce", "mall", "shopping", "sales growth", "luxury demand",
+        "consumer sentiment", "shopping behavior", "brand loyalty", "e-retail boom", "retail traffic"
     ],
     "Energy Sector": [
-        "oil", "gas", "OPEC", "fossil fuel", "energy prices", "renewable", "solar", "wind", "electricity"
+        "oil", "gas", "OPEC", "fossil fuel", "energy prices", "renewable", "solar", "wind", "electricity",
+        "carbon neutral", "green energy", "net zero", "shale production", "offshore drilling", "carbon capture"
     ],
     "Labor Market": [
-        "unemployment", "hiring", "layoffs", "job market", "nonfarm payroll", "job growth", "recruitment"
+        "unemployment", "hiring", "layoffs", "job market", "nonfarm payroll", "job growth", "recruitment",
+        "remote work", "gig economy", "wage inflation", "talent shortage", "labor participation rate", "remote hiring"
     ],
     "Technology Sector": [
-        "AI", "cloud", "software", "data center", "tech layoffs", "big tech", "google", "microsoft"
+        "AI", "cloud", "software", "data center", "tech layoffs", "big tech", "google", "microsoft",
+        "generative AI", "cybersecurity", "cloud migration", "tech bubble"
     ],
     "Healthcare & Pharma": [
-        "healthcare", "drug", "FDA", "biotech", "vaccine", "clinical trial", "pharma", "hospital"
+        "healthcare", "drug", "FDA", "biotech", "vaccine", "clinical trial", "pharma", "hospital",
+        "gene therapy", "drug approval", "telemedicine", "drug pipeline", "FDA fast track", "clinical milestone"
     ],
     "Manufacturing": [
-        "factory", "production", "plant", "assembly", "automation", "manufacturing", "industrial"
+        "factory", "production", "plant", "assembly", "automation", "manufacturing", "industrial",
+        "industrial automation", "smart factory", "supply chain resilience", "lean manufacturing", "industrial IoT", "smart assembly line"
     ]
 }
