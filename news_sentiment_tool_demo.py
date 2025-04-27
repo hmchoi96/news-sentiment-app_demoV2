@@ -73,21 +73,19 @@ def contains_keywords(text, keywords):
     return sum(k in text for k in keywords) >= 1 # 최소 한 개 이상 포함
 
 def filter_articles(articles, keywords, max_filtered=50):
-    seen_sources = set()
     filtered = []
     for a in articles:
-        source = a['source']['name']
         title = a['title']
         desc = a['description']
         if not title or not desc:
             continue
         combined = f"{title} {desc}"
-        if contains_keywords(combined, keywords) and source not in seen_sources:
+        if contains_keywords(combined, keywords):  # 소스 중복 제거 안 함
             filtered.append(a)
-            seen_sources.add(source)
         if len(filtered) >= max_filtered:
             break
     return filtered
+
 
 def run_sentiment_analysis(articles):
     sentiment_pipeline = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english", framework="pt")
