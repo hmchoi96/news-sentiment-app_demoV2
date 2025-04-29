@@ -21,18 +21,21 @@ industry_choice = st.sidebar.selectbox("Industry", ["All"] + list(INDUSTRY_KEYWO
 language_choice = st.sidebar.selectbox("Language", list(LANG_TEXT.keys()))
 st.session_state["language"] = language_choice
 
-# 분석 실행
+# 분석 실행 (try-except 추가됨)
 if st.sidebar.button("Run Analysis"):
-    with st.spinner("Running sentiment and summary analysis..."):
-        # 수정: 파라미터 순서 (topic, country, industry, language)
-        result = analyze_topic(topic_choice, country=country_choice, industry=industry_choice, language=language_choice)
+    try:
+        with st.spinner("Running sentiment and summary analysis..."):
+            result = analyze_topic(topic_choice, country=country_choice, industry=industry_choice, language=language_choice)
 
-    # 세션에 저장
-    st.session_state["result"] = result
-    st.session_state["timestamp"] = datetime.now().strftime("%B %d, %Y %H:%M")
-    st.session_state["topic_choice"] = topic_choice
-    st.session_state["country_choice"] = country_choice
-    st.session_state["industry_choice"] = industry_choice
+        # 세션에 저장
+        st.session_state["result"] = result
+        st.session_state["timestamp"] = datetime.now().strftime("%B %d, %Y %H:%M")
+        st.session_state["topic_choice"] = topic_choice
+        st.session_state["country_choice"] = country_choice
+        st.session_state["industry_choice"] = industry_choice
+
+    except Exception as e:
+        st.error(f"❌ 오류 발생: {e}")
 
 # 결과 표시
 if "result" in st.session_state:
@@ -82,7 +85,6 @@ if "result" in st.session_state:
         col1, col2, col3 = st.columns([1, 8, 1])
         with col2:
             draw_sentiment_chart(sector_sentiment_scores)
-
     else:
         st.warning("No sector sentiment data available.")
 
@@ -98,17 +100,14 @@ if "result" in st.session_state:
         st.info("No sector impact summaries available.")
 
     # 4. Wiserbond Interpretation
-# 4. Wiserbond Interpretation
     st.markdown("### 4. Wiserbond Interpretation")
     if expert_summary:
         st.markdown("✅ **Positive Insight**")
         st.success(expert_summary.get('positive_summary', 'No positive insights found.'))
-    
         st.markdown("❗ **Negative Insight**")
         st.warning(expert_summary.get('negative_summary', 'No negative insights found.'))
     else:
         st.info("No expert interpretation available.")
-
 
     st.markdown("---")
     st.markdown("*This report layout is optimized for professional printing and PDF export.*")
