@@ -9,37 +9,25 @@ from config import INDUSTRY_SUBSECTORS, SECTOR_KEYWORDS
 from collections import Counter
 from transformers import pipeline
 
-
-from config import INDUSTRY_SUBSECTORS, SECTOR_KEYWORDS
-
 def detect_impacted_sectors(articles, selected_industry):
-    """
-    선택한 산업군에 따라 관련 섹터 키워드가 뉴스 본문(title + description + content)에 얼마나 포함되어 있는지 감지.
-    """
     impact_map = {}
     source_map = {}
-
-    # 분석 대상 섹터 결정
     relevant_sectors = (
         list(SECTOR_KEYWORDS.keys()) if selected_industry == "All"
         else list(INDUSTRY_SUBSECTORS.get(selected_industry, {}).keys())
     )
-
     for a in articles:
         text = " ".join([
             a.get("title", ""),
             a.get("description", ""),
             a.get("content", "")
         ]).lower()
-
         for sector in relevant_sectors:
             keywords = SECTOR_KEYWORDS.get(sector, [])
             if any(k.lower() in text for k in keywords):
                 impact_map.setdefault(sector, []).append(text)
                 source_map.setdefault(sector, []).append(a.get('source', 'Unknown'))
-
     return impact_map, source_map
-
 
 def summarize_sector_impact(sector_texts):
     if not sector_texts:
@@ -52,7 +40,6 @@ def summarize_sector_impact(sector_texts):
     except Exception:
         return "Summary model failed."
 
-
 def compute_sector_sentiment_scores(analyzed, selected_industry):
     sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
     sector_scores = {}
@@ -61,11 +48,9 @@ def compute_sector_sentiment_scores(analyzed, selected_industry):
         list(SECTOR_KEYWORDS.keys()) if selected_industry == "All"
         else list(INDUSTRY_SUBSECTORS.get(selected_industry, {}).keys())
     )
-
     for sector in relevant_sectors:
         sector_scores[sector] = 0.0
         sector_counts[sector] = 0
-
     for a in analyzed:
         text = f"{a['title']} {a.get('description', '')}".lower()
         score = sentiment_map.get(a["sentiment"], 0.5)
@@ -75,48 +60,61 @@ def compute_sector_sentiment_scores(analyzed, selected_industry):
                 sector_scores[sector] += score
                 sector_counts[sector] += 1
                 break
-
     averaged_scores = {
         sector: (sector_scores[sector] / sector_counts[sector]) if sector_counts[sector] else 0.0
         for sector in relevant_sectors
     }
     return averaged_scores
 
+def generate_fallback_impact_summary(expert_summary, selected_industry="All"):
+    fallback_summary = []
+    text_sources = [
+        ("positive_summary", expert_summary.get("positive_summary", "")),
+        ("negative_summary", expert_summary.get("negative_summary", ""))
+    ]
+    if selected_industry == "All":
+        candidate_sectors = SECTOR_KEYWORDS.keys()
+    else:
+        candidate_sectors = INDUSTRY_SUBSECTORS.get(selected_industry, {}).keys()
+    for label, summary_text in text_sources:
+        text_lower = summary_text.lower()
+        for sector in candidate_sectors:
+            keywords = [k.lower() for k in SECTOR_KEYWORDS.get(sector, [])]
+            if any(k in text_lower for k in keywords):
+                fallback_summary.append({
+                    "sector": sector,
+                    "impact": f"(Inferred from summary: {label}) {summary_text[:150]}...",
+                    "source": "Wiserbond Summary"
+                })
+    return fallback_summary
 
 def analyze_topic(topic, country="Global", industry="All", language="English"):
     setting = TOPIC_SETTINGS[topic]
     search_term = setting["search_term"]
     if country != "Global":
         search_term += f" {country}"
-
     keywords = setting["keywords"].copy()
     if industry != "All":
         industry_keywords = [kw for s in INDUSTRY_SUBSECTORS.get(industry, {}).values() for kw in s]
         keywords += industry_keywords
-
     raw_articles = get_news(search_term)
     filtered_articles = filter_articles(raw_articles, keywords)
     analyzed_articles = run_sentiment_analysis(filtered_articles)
-
     sentiment_counts = {"Positive": 0, "Neutral": 0, "Negative": 0}
     for a in analyzed_articles:
         label = a["sentiment"].capitalize()
         if label in sentiment_counts:
             sentiment_counts[label] += 1
-
     pos_news = [a for a in analyzed_articles if a["sentiment"] == "POSITIVE"]
     neg_news = [a for a in analyzed_articles if a["sentiment"] == "NEGATIVE"]
-
     pos_sources = sorted(set(a["source"] for a in pos_news))
     neg_sources = sorted(set(a["source"] for a in neg_news))
-
     dominant_sentiment = max(sentiment_counts, key=sentiment_counts.get)
-    top_issue_summary = "renewed US tariff threats and China's retaliatory stance"  # future: automate this
+    top_issue_summary = "renewed US tariff threats and China's retaliatory stance"
     executive_summary = (
         f"Over the past 3 days, news coverage on **{topic}** has been predominantly "
         f"**{dominant_sentiment.lower()}**, with a focus on {top_issue_summary}."
     )
-
     impact_summary = []
     impact_map, source_map = detect_impacted_sectors(analyzed_articles, industry)
     for sector, texts in impact_map.items():
@@ -127,13 +125,14 @@ def analyze_topic(topic, country="Global", industry="All", language="English"):
             "impact": summarize_sector_impact(texts),
             "source": most_common_source
         })
-
-    sector_sentiment_scores = compute_sector_sentiment_scores(analyzed_articles, industry)
     expert_summary = {
         "positive_summary": summarize_by_sentiment(analyzed_articles, "POSITIVE", keywords),
         "negative_summary": summarize_by_sentiment(analyzed_articles, "NEGATIVE", keywords)
     }
-
+    if not impact_summary or len(impact_summary) < 2:
+        fallback = generate_fallback_impact_summary(expert_summary, industry)
+        impact_summary.extend(fallback)
+    sector_sentiment_scores = compute_sector_sentiment_scores(analyzed_articles, industry)
     return {
         "sentiment_counts": sentiment_counts,
         "positive_news": pos_news,
