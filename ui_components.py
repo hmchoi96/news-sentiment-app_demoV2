@@ -1,47 +1,37 @@
+# ui_components.py
 import streamlit as st
 import matplotlib.pyplot as plt
-from matplotlib.ticker import FixedLocator
-WISERBOND_COLOR = "#051F5B"
 
-def display_news_section(label, news_list, max_visible=3):
-    if not news_list:
-        st.markdown(f"_No {label.lower()} found._")
-        return
-
+def display_news_section(news_list, max_visible=3):
+    """뉴스 리스트와 AI 요약 표시"""
     sorted_news = sorted(news_list, key=lambda x: x.get("score",0), reverse=True)
-    visible, hidden = sorted_news[:max_visible], sorted_news[max_visible:]
+    visible = sorted_news[:max_visible]
+    hidden  = sorted_news[max_visible:]
 
-    st.markdown(f"**{label}**")
-    for n in visible:
-        st.markdown(
-            f"- **[{n['title']}]({n['url']})**  \n"
-            f"  Source: {n['source']} | Score: {n['score']}  \n"
-            f"  {n.get('description','')}"
-        )
+    for idx, art in enumerate(visible,1):
+        st.markdown(f"**{idx}. {art['title']}**")
+        st.write(art.get("description",""))
+        st.markdown(f"*Source: {art.get('source','Unknown')}*")
+        if art.get("ai_summary"):
+            st.markdown(f"*AI Summary:* {art['ai_summary']}")
+        st.markdown("---")
 
     if hidden:
-        with st.expander(f"Show {len(hidden)} more"):
-            for n in hidden:
-                st.markdown(
-                    f"- **[{n['title']}]({n['url']})**  \n"
-                    f"  Source: {n['source']} | Score: {n['score']}  \n"
-                    f"  {n.get('description','')}"
-                )
+        if st.button(f"Show {len(hidden)} more"):
+            for art in hidden:
+                st.markdown(f"**• {art['title']}**")
+                st.write(art.get("description",""))
+                st.markdown(f"*Source: {art.get('source','Unknown')}*")
+                if art.get("ai_summary"):
+                    st.markdown(f"*AI Summary:* {art['ai_summary']}")
+                st.markdown("---")
 
-def draw_sentiment_chart(scores: dict):
-    if not scores:
-        st.markdown("_No sentiment data available._")
-        return
-    sectors, values = list(scores.keys()), list(scores.values())
-    overall = sum(values)/len(values) if values else 0.5
-
+def draw_sentiment_chart(counts, color):
+    """감정 분포 차트 그리기"""
+    labels = list(counts.keys())
+    values = [counts[lbl] for lbl in labels]
     fig, ax = plt.subplots()
-    ax.barh(sectors, values, color=WISERBOND_COLOR, alpha=0.8)
-    ax.axvline(0.5, linestyle="--", alpha=0.5)
-    ax.axvline(overall, color=WISERBOND_COLOR, linewidth=2, label="Overall")
-    ax.set_xlim(0,1)
-    ax.xaxis.set_major_locator(FixedLocator([0,0.5,1]))
-    ax.set_xlabel("Sentiment (0=Neg, 1=Pos)")
-    ax.legend(frameon=False)
-    plt.tight_layout()
+    ax.bar(labels, values, color=color)
+    ax.set_ylabel("Count")
+    ax.set_title("Sentiment Distribution")
     st.pyplot(fig)
