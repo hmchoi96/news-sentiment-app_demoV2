@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime
 
 from core import analyze_topic
-from config import LANG_TEXT, INDUSTRY_KEYWORDS, COUNTRY_LIST
+from config import LANG_TEXT, COUNTRY_LIST, INDUSTRY_SUBSECTORS
 from news_sentiment_tool_demo import TOPIC_SETTINGS
 from ui_components import display_news_section, draw_sentiment_chart
 
@@ -15,7 +15,7 @@ st.set_page_config(page_title="Wiserbond News Sentiment Report", layout="wide")
 st.sidebar.title("🔍 Analysis Settings")
 topic_choice = st.sidebar.selectbox("Topic", list(TOPIC_SETTINGS.keys()))
 country_choice = st.sidebar.selectbox("Country", COUNTRY_LIST)
-industry_choice = st.sidebar.selectbox("Industry", ["All"] + list(INDUSTRY_KEYWORDS.keys()))
+industry_choice = st.sidebar.selectbox("Industry", ["All"] + list(INDUSTRY_SUBSECTORS.keys()))
 language_choice = st.sidebar.selectbox("Language", list(LANG_TEXT.keys()))
 st.session_state["language"] = language_choice
 
