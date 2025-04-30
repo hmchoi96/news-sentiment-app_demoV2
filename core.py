@@ -10,21 +10,34 @@ from collections import Counter
 from transformers import pipeline
 
 
+from config import INDUSTRY_SUBSECTORS, SECTOR_KEYWORDS
+
 def detect_impacted_sectors(articles, selected_industry):
-    """선택된 산업에 따라 관련된 섹터 뉴스만 추출"""
+    """
+    선택한 산업군에 따라 관련 섹터 키워드가 뉴스 본문(title + description + content)에 얼마나 포함되어 있는지 감지.
+    """
     impact_map = {}
     source_map = {}
+
+    # 분석 대상 섹터 결정
     relevant_sectors = (
         list(SECTOR_KEYWORDS.keys()) if selected_industry == "All"
         else list(INDUSTRY_SUBSECTORS.get(selected_industry, {}).keys())
     )
+
     for a in articles:
-        text = f"{a['title']} {a.get('description', '')}".lower()
+        text = " ".join([
+            a.get("title", ""),
+            a.get("description", ""),
+            a.get("content", "")
+        ]).lower()
+
         for sector in relevant_sectors:
             keywords = SECTOR_KEYWORDS.get(sector, [])
             if any(k.lower() in text for k in keywords):
                 impact_map.setdefault(sector, []).append(text)
                 source_map.setdefault(sector, []).append(a.get('source', 'Unknown'))
+
     return impact_map, source_map
 
 
