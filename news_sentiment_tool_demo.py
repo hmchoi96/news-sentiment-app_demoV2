@@ -1,17 +1,13 @@
 # news_sentiment_tool_demo.py
-
 import requests
 from transformers import pipeline
 from datetime import datetime, timedelta
-import logging
+import matplotlib.pyplot as plt
 
-logging.basicConfig(level=logging.INFO)
-
-# 뉴스 API 설정
-NEWS_API_ENDPOINT = 'https://newsapi.org/v2/everything'
+# ✅ API Key
 NEWS_API_KEY = '0e28b7f94fc04e6b9d130092886cabc6'
 
-# 토픽별 검색어 및 키워드 (V2)
+# ✅ Keyword Setting
 TOPIC_SETTINGS = {
     "tariff": {
         "search_term": "tariff",
@@ -53,128 +49,85 @@ TOPIC_SETTINGS = {
         ]
     }
 }
-# :contentReference[oaicite:2]{index=2}&#8203;:contentReference[oaicite:3]{index=3}
 
-# 3일 전 날짜
 FROM_DATE = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
 
-# 전역 파이프라인 (한 번만 로드)
-_sentiment_pipeline = pipeline(
-    "sentiment-analysis",
-    model="distilbert-base-uncased-finetuned-sst-2-english"
-)
-_summarizer = pipeline(
-    "summarization",
-    model="sshleifer/distilbart-cnn-12-6"
-)
-
 def get_news(search_term, max_pages=4, page_size=100):
-    """NewsAPI에서 기사 수집, 중복 URL 제거."""
     all_articles = []
-    seen_urls = set()
-    params = {
-        "q": search_term,
-        "from": FROM_DATE,
-        "language": "en",
-        "sortBy": "publishedAt",
-        "pageSize": page_size,
-        "apiKey": NEWS_API_KEY
-    }
     for page in range(1, max_pages + 1):
-        params["page"] = page
-        try:
-            resp = requests.get(NEWS_API_ENDPOINT, params=params)
-            resp.raise_for_status()
-            data = resp.json()
-        except Exception as e:
-            logging.error(f"News API error: {e}")
-            break
-
-        for art in data.get("articles", []):
-            url = art.get("url")
-            if url and url not in seen_urls:
-                seen_urls.add(url)
-                all_articles.append({
-                    "source": art.get("source", {}).get("name", "Unknown"),
-                    "title": art.get("title", "") or "",
-                    "description": art.get("description", "") or "",
-                    "url": url
-                })
-
+        url = (
+            f'https://newsapi.org/v2/everything?q={search_term}'
+            f'&from={FROM_DATE}&language=en&pageSize={page_size}&page={page}&sortBy=publishedAt'
+            f'&apiKey={NEWS_API_KEY}'
+        )
+        response = requests.get(url)
+        data = response.json()
+        if 'articles' in data:
+            all_articles.extend(data['articles'])
         if len(data.get("articles", [])) < page_size:
             break
-
     return all_articles
 
 def contains_keywords(text, keywords):
-    """문자열 키워드만 필터링하고, 최소 2개 이상 매칭 여부."""
     text = (text or "").lower()
-    valid = [k.lower() for k in keywords if isinstance(k, str)]
-    return sum(1 for k in valid if k in text) >= 2
+    return sum(k in text for k in keywords) >= 1 # 최소 한 개 이상 포함
 
 def filter_articles(articles, keywords, max_filtered=50):
-    """키워드 기반 필터링 후 상위 max_filtered개 반환."""
     filtered = []
-    for art in articles:
-        combined = f"{art['title']} {art['description']}"
-        if contains_keywords(combined, keywords):
-            filtered.append(art)
+    for a in articles:
+        title = a['title']
+        desc = a['description']
+        if not title or not desc:
+            continue
+        combined = f"{title} {desc}"
+        if contains_keywords(combined, keywords):  # 소스 중복 제거 안 함
+            filtered.append(a)
         if len(filtered) >= max_filtered:
             break
-    return filtered  # :contentReference[oaicite:4]{index=4}&#8203;:contentReference[oaicite:5]{index=5}
+    return filtered
+
 
 def run_sentiment_analysis(articles):
-    """각 기사에 대해 감정 분석 수행."""
+    sentiment_pipeline = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english", framework="pt")
     results = []
-    for art in articles:
-        text = f"{art['title']}. {art['description']}"
-        try:
-            res = _sentiment_pipeline(text)[0]
-        except Exception as e:
-            logging.error(f"Sentiment error: {e}")
-            continue
+    for a in articles:
+        text = f"{a['title']}. {a['description'] or ''}"
+        sentiment = sentiment_pipeline(text)[0]
         results.append({
-            "source": art["source"],
-            "title": art["title"],
-            "description": art["description"],
-            "sentiment": res["label"],
-            "score": round(res["score"], 2),
-            "url": art.get("url")
+            "source": a['source']['name'],
+            "title": a['title'],
+            "description": a['description'],
+            "sentiment": sentiment['label'],
+            "score": round(sentiment['score'], 2)
         })
     return results
 
-def summarize_by_sentiment(articles, label, keywords, max_articles=5):
-    """
-    지정된 감정(label)의 기사 상위 max_articles개를
-    500단어 이하로 묶어서 요약.
-    """
-    texts = []
-    for art in articles:
-        if art["sentiment"] == label and contains_keywords(
-            f"{art['title']} {art['description']}", keywords
-        ):
-            texts.append(f"{art['title']}. {art['description']}")
-        if len(texts) >= max_articles:
-            break
+def summarize_by_sentiment(articles, sentiment_label, keywords):
+    summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
+    texts = [
+        f"{a['description']} (Title: {a['title']})"
+        for a in articles
+        if a['sentiment'] == sentiment_label and a['description'] and contains_keywords(f"{a['description']} {a['title']}", keywords)
+    ]
+    
+    if len(texts) < 1:
+        return "No matching articles found for summarization."
 
-    if not texts:
-        return ""
-
-    # 단일 묶음이 너무 길어지지 않도록 제한
-    combined = []
+    chunks = []
+    word_limit = 500
+    current_chunk = []
     total_words = 0
-    for t in texts:
-        wc = len(t.split())
-        if total_words + wc > 500:
-            break
-        combined.append(t)
-        total_words += wc
 
-    chunk = " ".join(combined)
+    for t in texts:
+        w_count = len(t.split())
+        if total_words + w_count > word_limit:
+            break
+        current_chunk.append(t)
+        total_words += w_count
+
+    truncated = " ".join(current_chunk)
     try:
-        summary = _summarizer(chunk, max_length=200, min_length=60, do_sample=False)[0]["summary_text"]
+        summary = summarizer(truncated, max_length=200, min_length=60, do_sample=False)[0]['summary_text']
         return summary
     except Exception as e:
-        logging.error(f"Summarization error: {e}")
-        return "Summarization failed."
-
+        return "Summarization failed due to model input error."
