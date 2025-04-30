@@ -102,9 +102,11 @@ def get_news(search_term, max_pages=4, page_size=100):
             all_articles.extend(data['articles'])
         if len(data.get("articles", [])) < page_size:
             break
-    if len(all_articles) < 20:
-        backup_articles = get_news_newsdata(search_term)
-        all_articles = deduplicate_articles(all_articles + backup_articles)
+
+    # ✅ 항상 NewsData에서 5개만 보조로 가져옴
+    backup_articles = get_news_newsdata(search_term)[:5]
+    all_articles = deduplicate_articles(all_articles + backup_articles)
+
     return all_articles
 
 def contains_keywords(text, keywords):
