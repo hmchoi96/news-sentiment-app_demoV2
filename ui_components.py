@@ -1,8 +1,7 @@
-
-# ui_components.py
 import streamlit as st
 import matplotlib.pyplot as plt
 from collections import Counter
+
 WISERBOND_COLOR = "#051F5B"
 
 def display_news_section(label, news_list, max_visible=3):
@@ -28,23 +27,30 @@ def display_news_section(label, news_list, max_visible=3):
                 st.markdown(f"**Summary:** {news['description']}")
                 st.write("---")
 
-def draw_sentiment_chart(sector_sentiment_scores):
-    """섹터별 평균 감정 점수 그래프"""
-    if not sector_sentiment_scores:
+
+def draw_sentiment_chart(sector_sentiment_scores, selected_industry="All"):
+    """
+    선택된 산업군 기준으로 섹터만 시각화. 
+    해당 섹터가 없더라도 모두 0점으로 보여줌 (산업별 기준 적용).
+    """
+    from config import INDUSTRY_SUBSECTORS
+
+    if selected_industry != "All":
+        sectors = list(INDUSTRY_SUBSECTORS.get(selected_industry, {}).keys())
+        scores = [sector_sentiment_scores.get(sec, 0.0) for sec in sectors]
+    else:
+        sectors = list(sector_sentiment_scores.keys())
+        scores = list(sector_sentiment_scores.values())
+
+    if not sectors:
         st.write("No sector sentiment scores to visualize.")
         return
 
-    sectors = list(sector_sentiment_scores.keys())
-    scores = list(sector_sentiment_scores.values())
     overall_score = sum(scores) / len(scores) if scores else 0.5
-
-    # 색상: 부정/중립/긍정
     colors = ['#ef6c6c' if s < 0.4 else '#6cadef' if s > 0.6 else '#b8b8b8' for s in scores]
 
     fig, ax = plt.subplots(figsize=(6, 2.4), dpi=100)
     ax.barh(sectors, scores, height=0.5, color=colors, alpha=0.8)
-
-    # 기준선
     ax.axvline(x=0.5, color='gray', linestyle='--', alpha=0.5)
     ax.axvline(x=overall_score, color=WISERBOND_COLOR, linestyle='-', linewidth=2, label='Overall Sentiment')
 
@@ -56,4 +62,3 @@ def draw_sentiment_chart(sector_sentiment_scores):
     ax.legend(frameon=False, loc='lower right')
     plt.tight_layout()
     st.pyplot(fig)
-
