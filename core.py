@@ -131,7 +131,9 @@ def analyze_topic(topic, country="Global", industry="All", language="English"):
     }
     if not impact_summary or len(impact_summary) < 2:
         fallback = generate_fallback_impact_summary(expert_summary, industry)
-        impact_summary.extend(fallback)
+        existing_sectors = {item["sector"] for item in impact_summary}
+        filtered_fallback = [f for f in fallback if f["sector"] not in existing_sectors]
+        impact_summary.extend(filtered_fallback)
     sector_sentiment_scores = compute_sector_sentiment_scores(analyzed_articles, industry)
     return {
         "sentiment_counts": sentiment_counts,
