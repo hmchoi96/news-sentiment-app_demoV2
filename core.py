@@ -1,133 +1,93 @@
 from news_sentiment_tool_demo import (
-    get_news,
-    filter_articles,
-    run_sentiment_analysis,
-    summarize_by_sentiment,
+    get_news, filter_articles,
+    run_sentiment_analysis, summarize_by_sentiment,
     TOPIC_SETTINGS
 )
-from config import INDUSTRY_KEYWORDS, SECTOR_KEYWORDS
+from config import (
+    INDUSTRY_KEYWORDS, INDUSTRY_SUBSECTORS,
+    SECTOR_KEYWORDS
+)
 from collections import Counter
-from transformers import pipeline
+from datetime import datetime
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 def detect_impacted_sectors(articles):
-    """기사 텍스트를 통해 산업 영향 파악"""
-    impact_map = {}
-    source_map = {}
+    """기사별 언급된 섹터 카운트 요약"""
+    mentions = []
     for a in articles:
-        text = f"{a['title']} {a.get('description', '')}".lower()
-        for sector, keywords in SECTOR_KEYWORDS.items():
-            if any(k in text for k in keywords):
-                impact_map.setdefault(sector, []).append(text)
-                source_map.setdefault(sector, []).append(a.get('source', 'Unknown'))
-    return impact_map, source_map
+        text = f"{a['title']} {a.get('description','')}".lower()
+        for sec, kws in SECTOR_KEYWORDS.items():
+            if any(k.lower() in text for k in kws):
+                mentions.append(sec)
+    counts = Counter(mentions)
+    return [{"sector": s, "impact": f"{counts[s]} mentions"} for s in counts]
 
-def summarize_sector_impact(sector_texts):
-    """산업별 임팩트 요약"""
-    if not sector_texts:
-        return "No clear impact found."
-    summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
-    text_block = " ".join(sector_texts)[:512]
-    try:
-        summary = summarizer(text_block, max_length=40, min_length=10, do_sample=False)[0]["summary_text"]
-        return summary
-    except Exception:
-        return "Summary model failed."
-
-def compute_sector_sentiment_scores(analyzed, sector_keywords):
-    """섹터별 평균 감정 점수 계산"""
-    sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
-    sector_scores = {}
-    sector_counts = {}
-
+def compute_sector_sentiment_scores(analyzed, mapping):
+    """
+    키워드 매핑(mapping) 기반으로 부문별 평점 계산
+    평균 점수를 [-1,1] -> [0,1]로 정규화
+    """
+    totals = {k: 0.0 for k in mapping}
+    counts = {k: 0 for k in mapping}
     for a in analyzed:
-        text = f"{a['title']} {a.get('description', '')}".lower()
-        score = sentiment_map.get(a["sentiment"], 0.5)
-        for sector, keywords in sector_keywords.items():
-            if any(k in text for k in keywords):
-                sector_scores.setdefault(sector, 0.0)
-                sector_counts.setdefault(sector, 0)
-                sector_scores[sector] += score
-                sector_counts[sector] += 1
-
-    averaged_scores = {
-        sector: (sector_scores[sector] / sector_counts[sector])
-        for sector in sector_scores
-    }
-
-    return averaged_scores
+        text = f"{a['title']} {a.get('description','')}".lower()
+        for sec, kws in mapping.items():
+            if any(k.lower() in text for k in kws):
+                counts[sec] += 1
+                score = a["score"] if a["sentiment"] == "POSITIVE" else -a["score"] if a["sentiment"] == "NEGATIVE" else 0
+                totals[sec] += score
+    final = {}
+    for sec in totals:
+        if counts[sec]:
+            avg = totals[sec] / counts[sec]
+            final[sec] = round((avg + 1) / 2, 2)
+        else:
+            final[sec] = 0.5
+    return final
 
 def analyze_topic(topic, country="Global", industry="All", language="English"):
-    """전체 토픽 분석 메인 함수"""
-    # 검색어 준비
-    setting = TOPIC_SETTINGS[topic]
-    search_term = setting["search_term"]
-    if country != "Global":
-        search_term += f" {country}"
+    settings = TOPIC_SETTINGS.get(topic, {})
+    keywords = settings.get("keywords", [])
+    search_term = settings.get("search_term", topic)
 
-    # 키워드 설정
-    keywords = setting["keywords"].copy()
-    if industry != "All":
-        keywords += INDUSTRY_KEYWORDS.get(industry, [])
+    raw = get_news(search_term)
+    filtered = filter_articles(raw, keywords)
+    analyzed = run_sentiment_analysis(filtered)
 
-    # 1. 뉴스 수집 및 필터링
-    raw_articles = get_news(search_term)
-    filtered_articles = filter_articles(raw_articles, keywords)
+    sentiment_counts = Counter(a["sentiment"] for a in analyzed)
+    pos_news = [a for a in analyzed if a["sentiment"] == "POSITIVE"]
+    neg_news = [a for a in analyzed if a["sentiment"] == "NEGATIVE"]
 
-    # 2. 감정 분석
-    analyzed_articles = run_sentiment_analysis(filtered_articles)
+    # Executive summary: 상위 3개 단어 추출
+    words = []
+    for a in filtered:
+        words += [w.lower().strip(".,") for w in a.get("title","").split()]
+    top3 = [w for w,_ in Counter(words).most_common(3)]
+    executive_summary = f"Top terms: {', '.join(top3)}."
 
-    # 3. 감정 통계
-    sentiment_counts = {"Positive": 0, "Neutral": 0, "Negative": 0}
-    for a in analyzed_articles:
-        label = a["sentiment"].capitalize()
-        if label in sentiment_counts:
-            sentiment_counts[label] += 1
+    impact_summary = detect_impacted_sectors(filtered)
 
-    # 긍정/부정 기사 및 소스
-    pos_news = [a for a in analyzed_articles if a["sentiment"] == "POSITIVE"]
-    neg_news = [a for a in analyzed_articles if a["sentiment"] == "NEGATIVE"]
+    # 섹터 또는 서브섹터 감정 점수
+    if industry != "All" and industry in INDUSTRY_SUBSECTORS:
+        mapping = INDUSTRY_SUBSECTORS[industry]
+    else:
+        mapping = SECTOR_KEYWORDS
+    sector_sentiment_scores = compute_sector_sentiment_scores(analyzed, mapping)
 
-    pos_sources = sorted(set(a["source"] for a in pos_news))
-    neg_sources = sorted(set(a["source"] for a in neg_news))
+    # 전문가 요약
+    pos_summary = summarize_by_sentiment(analyzed, "POSITIVE", keywords)
+    neg_summary = summarize_by_sentiment(analyzed, "NEGATIVE", keywords)
+    expert_summary = {"positive_summary": pos_summary, "negative_summary": neg_summary}
 
-    # 4. Executive Summary (핵심요약)
-    dominant_sentiment = max(sentiment_counts, key=sentiment_counts.get)
-    top_issue_summary = "renewed US tariff threats and China's retaliatory stance"  # ★ 임시 고정 (나중에 자동추출 가능)
-    executive_summary = (
-        f"Over the past 3 days, news coverage on **{topic}** has been predominantly "
-        f"**{dominant_sentiment.lower()}**, with a focus on {top_issue_summary}."
-    )
-
-    # 5. Sector별 Impact Summary
-    impact_summary = []
-    impact_map, source_map = detect_impacted_sectors(analyzed_articles)
-    for sector, texts in impact_map.items():
-        sources = source_map.get(sector, [])
-        most_common_source = Counter(sources).most_common(1)[0][0] if sources else "Unknown"
-        impact_summary.append({
-            "sector": sector,
-            "impact": summarize_sector_impact(texts),
-            "source": most_common_source
-        })
-
-    # 6. Sector별 Sentiment Score
-    sector_sentiment_scores = compute_sector_sentiment_scores(analyzed_articles, SECTOR_KEYWORDS)
-
-    # 7. 전문가 요약 (Positive/Negative 따로)
-    expert_summary = {
-        "positive_summary": summarize_by_sentiment(analyzed_articles, "POSITIVE", keywords),
-        "negative_summary": summarize_by_sentiment(analyzed_articles, "NEGATIVE", keywords)
-    }
-
-    # 최종 결과 리턴
     return {
         "sentiment_counts": sentiment_counts,
         "positive_news": pos_news,
         "negative_news": neg_news,
-        "positive_sources": pos_sources,
-        "negative_sources": neg_sources,
         "executive_summary": executive_summary,
         "impact_summary": impact_summary,
         "sector_sentiment_scores": sector_sentiment_scores,
-        "expert_summary": expert_summary
+        "expert_summary": expert_summary,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
