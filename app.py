@@ -10,10 +10,8 @@ from ui_components import display_news_section, draw_sentiment_chart
 
 WISERBOND_COLOR = "#051F5B"
 
-# 페이지 설정
 st.set_page_config(page_title="Wiserbond News Sentiment Report", layout="wide")
 
-# 사이드바 입력값 설정
 st.sidebar.title("🔍 Analysis Settings")
 topic_choice = st.sidebar.selectbox("Topic", list(TOPIC_SETTINGS.keys()))
 country_choice = st.sidebar.selectbox("Country", COUNTRY_LIST)
@@ -21,13 +19,11 @@ industry_choice = st.sidebar.selectbox("Industry", ["All"] + list(INDUSTRY_KEYWO
 language_choice = st.sidebar.selectbox("Language", list(LANG_TEXT.keys()))
 st.session_state["language"] = language_choice
 
-# 분석 실행 (try-except 추가됨)
 if st.sidebar.button("Run Analysis"):
     try:
         with st.spinner("Running sentiment and summary analysis..."):
             result = analyze_topic(topic_choice, country=country_choice, industry=industry_choice, language=language_choice)
 
-        # 세션에 저장
         st.session_state["result"] = result
         st.session_state["timestamp"] = datetime.now().strftime("%B %d, %Y %H:%M")
         st.session_state["topic_choice"] = topic_choice
@@ -37,7 +33,6 @@ if st.sidebar.button("Run Analysis"):
     except Exception as e:
         st.error(f"❌ 오류 발생: {e}")
 
-# 결과 표시
 if "result" in st.session_state:
     result = st.session_state["result"]
     executive_summary = result["executive_summary"]
@@ -46,8 +41,8 @@ if "result" in st.session_state:
     expert_summary = result["expert_summary"]
     sector_sentiment_scores = result["sector_sentiment_scores"]
     analysis_date = st.session_state["timestamp"]
+    selected_industry = st.session_state["industry_choice"]
 
-    # 스타일
     st.markdown(f"""
     <style>
     body {{
@@ -61,34 +56,34 @@ if "result" in st.session_state:
         color: {WISERBOND_COLOR};
     }}
     @media print {{
+        body {{ zoom: 90%; width: 100%; }}
         .element-container {{ page-break-inside: avoid; }}
+        h2 {{ font-size: 20pt; margin-top: 30px; }}
+        h3 {{ font-size: 16pt; margin-top: 20px; }}
+        p, li, span, div {{ font-size: 10pt; }}
     }}
     </style>
     """, unsafe_allow_html=True)
 
-    # 보고서 헤더
     st.markdown("## 📊 Wiserbond News Synthesizer V2 – Sentiment & Summary Report")
     st.write(f"**Date:** {analysis_date}")
     st.markdown(
-        f"<small>Topic: {st.session_state['topic_choice']} | Country: {st.session_state['country_choice']} | Industry: {st.session_state['industry_choice']}</small>",
+        f"<small>Topic: {st.session_state['topic_choice']} | Country: {st.session_state['country_choice']} | Industry: {selected_industry}</small>",
         unsafe_allow_html=True
     )
     st.write("---")
 
-    # 1. Executive Summary
     st.markdown("### 1. Executive Summary")
     st.info(executive_summary)
 
-    # 2. Sector Sentiment Spectrum (Bar Chart)
     st.markdown("### 2. Sector Sentiment Spectrum")
     if sector_sentiment_scores:
         col1, col2, col3 = st.columns([1, 8, 1])
         with col2:
-            draw_sentiment_chart(sector_sentiment_scores)
+            draw_sentiment_chart(sector_sentiment_scores, selected_industry)
     else:
         st.warning("No sector sentiment data available.")
 
-    # 3. Sector Impact Breakdown
     st.markdown("### 3. Sector Impact Breakdown")
     if impact_summary:
         for item in impact_summary:
@@ -99,7 +94,6 @@ if "result" in st.session_state:
     else:
         st.info("No sector impact summaries available.")
 
-    # 4. Wiserbond Interpretation
     st.markdown("### 4. Wiserbond Interpretation")
     if expert_summary:
         st.markdown("✅ **Positive Insight**")
