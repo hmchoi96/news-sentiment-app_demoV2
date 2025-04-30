@@ -82,11 +82,15 @@ def deduplicate_articles(articles):
     seen = set()
     unique = []
     for a in articles:
-        key = (a["title"], a["source"])
+        source = a["source"]
+        if isinstance(source, dict):
+            source = source.get("name", "Unknown")
+        key = (a["title"], source)
         if key not in seen:
             unique.append(a)
             seen.add(key)
     return unique
+
 
 def get_news(search_term, max_pages=4, page_size=100):
     all_articles = []
