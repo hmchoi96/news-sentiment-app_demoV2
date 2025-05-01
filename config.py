@@ -34,77 +34,88 @@ LANG_TEXT = {
 
 # ✅ Keyword Setting
 TOPIC_SETTINGS = {
-    "inflation": {
-        "search_term": "inflation",
+    "economic_slowdown": {
+        "search_term": "economic slowdown",
         "keywords": [
-            "inflation", "cpi", "ppi", "cost of living", "price surge", "wage pressure",
-            "interest rate", "consumer price", "pricing strategy", "demand slowdown"
+            "recession risk", "growth downgrade", "gdp contraction", "slowdown warning",
+            "economic deceleration", "output decline", "investment freeze",
+            "retail slowdown", "demand destruction"
         ]
     },
-    "fed_policy": {
-        "search_term": "federal reserve",
+    "interest_rate_risk": {
+        "search_term": "interest rate",
         "keywords": [
-            "federal reserve", "interest rate", "rate hike", "rate cut", "jerome powell",
-            "fomc", "monetary policy", "terminal rate", "neutral rate", "policy pause"
+            "interest rate hike", "rate cut", "borrowing cost", "loan interest",
+            "tightening cycle", "monetary policy", "central bank decision",
+            "federal reserve", "policy rate", "financial conditions"
         ]
     },
-    "supply_chain": {
-        "search_term": "supply chain",
+    "consumer_demand_shift": {
+        "search_term": "consumer demand",
         "keywords": [
-            "supply chain", "shipping delay", "freight cost", "port congestion",
-            "logistics disruption", "inventory shortage", "container backlog", "import bottleneck"
+            "spending cut", "demand softening", "consumer confidence drop",
+            "shift to essentials", "discretionary spending", "buying patterns",
+            "value-focused consumer", "retail sales weakness", "saving over spending"
         ]
     },
-    "china_demand": {
-        "search_term": "china economy",
+    "trade_policy_shift": {
+        "search_term": "trade policy",
         "keywords": [
-            "china demand", "china slowdown", "retail sales china", "export china",
-            "youth unemployment", "stimulus", "property crisis", "common prosperity"
+            "tariff", "export control", "import restriction", "trade agreement",
+            "retaliatory measures", "protectionism", "supply chain decoupling",
+            "FTA", "trade sanctions", "border tax"
         ]
     },
-    "ai_adoption": {
+    "currency_volatility": {
+        "search_term": "exchange rate",
+        "keywords": [
+            "currency volatility", "usd appreciation", "forex shock",
+            "yen depreciation", "exchange rate swing", "em currency drop",
+            "hedging costs", "import cost surge", "export competitiveness"
+        ]
+    },
+    "supply_chain_risk": {
+        "search_term": "supply chain disruption",
+        "keywords": [
+            "freight delay", "port congestion", "container shortage", "inventory strategy",
+            "shipping cost spike", "logistics bottleneck", "raw material delay",
+            "just-in-case strategy", "supplier instability", "transport disruption"
+        ]
+    },
+    "commodity_price_shock": {
+        "search_term": "commodity price",
+        "keywords": [
+            "oil price surge", "input cost pressure", "metal price jump",
+            "raw material inflation", "commodity rally", "diesel spike",
+            "energy-intensive sector", "commodity-driven inflation", "cost pass-through"
+        ]
+    },
+    "fiscal_spending_shift": {
+        "search_term": "government spending",
+        "keywords": [
+            "infrastructure bill", "fiscal stimulus", "budget expansion",
+            "subsidy program", "public investment", "stimulus withdrawal",
+            "austerity measures", "capital expenditure", "government procurement"
+        ]
+    },
+    "technology_disruption": {
         "search_term": "AI adoption",
         "keywords": [
-            "AI adoption", "chatgpt", "generative AI", "automation", "machine learning integration",
-            "AI investment", "AI workforce", "enterprise AI", "AI policy", "productivity gain"
+            "enterprise AI", "generative AI", "automation strategy", "AI-driven productivity",
+            "AI investment", "workflow automation", "LLM integration",
+            "tech stack upgrade", "job displacement", "AI policy shift"
         ]
     },
-    "green_subsidy": {
-        "search_term": "clean energy subsidy",
+    "climate_policy_impact": {
+        "search_term": "climate policy",
         "keywords": [
-            "clean energy subsidy", "IRA", "green tax credit", "renewable policy",
-            "solar incentive", "battery subsidy", "hydrogen funding", "EV rebate"
-        ]
-    },
-    "geopolitical_risk": {
-        "search_term": "geopolitical risk",
-        "keywords": [
-            "geopolitical risk", "supply chain tension", "taiwan strait", "russia sanctions",
-            "conflict escalation", "military drills", "trade war", "foreign investment risk"
-        ]
-    },
-    "labor_shortage": {
-        "search_term": "labor market",
-        "keywords": [
-            "labor shortage", "talent gap", "wage inflation", "recruiting difficulty",
-            "skill mismatch", "remote hiring", "job opening", "retention strategy"
-        ]
-    },
-    "fx_volatility": {
-        "search_term": "currency volatility",
-        "keywords": [
-            "currency volatility", "usd strength", "fx risk", "exchange rate swing",
-            "yen depreciation", "cad/usd", "forex hedging", "em currency drop"
-        ]
-    },
-    "consumer_weakness": {
-        "search_term": "consumer spending",
-        "keywords": [
-            "consumer weakness", "retail slowdown", "spending cut", "credit card debt",
-            "buying power", "discretionary pullback", "consumer confidence", "personal savings"
+            "carbon tax", "CBAM", "emission regulation", "green mandate",
+            "climate disclosure", "esg compliance", "low-carbon transition",
+            "environmental subsidy", "net zero target", "decarbonization"
         ]
     }
 }
+
 
 
 FROM_DATE = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
