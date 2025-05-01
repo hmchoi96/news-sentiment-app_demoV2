@@ -1,6 +1,6 @@
 import streamlit as st
-import plotly.express as px
-import pandas as pd
+import matplotlib.pyplot as plt
+from collections import Counter
 
 WISERBOND_COLOR = "#051F5B"
 
@@ -29,6 +29,10 @@ def display_news_section(label, news_list, max_visible=3):
 
 
 def draw_sentiment_chart(sector_sentiment_scores, selected_industry="All"):
+    """
+    선택된 산업군 기준으로 섹터만 시각화. 
+    해당 섹터가 없더라도 모두 0점으로 보여줌 (산업별 기준 적용).
+    """
     from config import INDUSTRY_SUBSECTORS
 
     if selected_industry != "All":
@@ -42,33 +46,19 @@ def draw_sentiment_chart(sector_sentiment_scores, selected_industry="All"):
         st.write("No sector sentiment scores to visualize.")
         return
 
-    df = pd.DataFrame({
-        "Sector": sectors,
-        "Sentiment": scores
-    })
+    overall_score = sum(scores) / len(scores) if scores else 0.5
+    colors = ['#ef6c6c' if s < 0.4 else '#6cadef' if s > 0.6 else '#b8b8b8' for s in scores]
 
-    fig = px.bar(
-        df,
-        y="Sector",
-        x="Sentiment",
-        orientation="h",
-        color="Sentiment",
-        color_continuous_scale=["#ef6c6c", "#b8b8b8", "#6cadef"],
-        range_x=[0, 1],
-        title="Sector Sentiment Overview"
-    )
+    fig, ax = plt.subplots(figsize=(6, 2.4), dpi=100)
+    ax.barh(sectors, scores, height=0.5, color=colors, alpha=0.8)
+    ax.axvline(x=0.5, color='gray', linestyle='--', alpha=0.5)
+    ax.axvline(x=overall_score, color=WISERBOND_COLOR, linestyle='-', linewidth=2, label='Overall Sentiment')
 
-    fig.add_vline(
-        x=0.5,
-        line_dash="dash",
-        line_color="gray",
-        annotation_text="Neutral",
-        annotation_position="top right"
-    )
-
-    fig.update_layout(
-        height=400,
-        margin=dict(l=20, r=20, t=50, b=20)
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
+    ax.set_xlim(0, 1)
+    ax.set_xticks([0, 0.5, 1])
+    ax.set_xticklabels(['Negative', 'Neutral', 'Positive'])
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.legend(frameon=False, loc='lower right')
+    plt.tight_layout()
+    st.pyplot(fig)
