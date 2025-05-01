@@ -1,10 +1,3 @@
-from datetime import datetime, timedelta
-
-
-
-FROM_DATE = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
-
-
 LANG_TEXT = {
     "English": {
         "header": "📊 Wiserbond News Sentiment Report",
@@ -32,91 +25,6 @@ LANG_TEXT = {
         "negative_title": "### ⚠️ Cobertura Negativa",
         "expert_insight": "## 💡 Interpretación de Wiserbond",
         "footer": "<small>Investigación Wiserbond · <a href='https://wiserbond.com'>wiserbond.com</a> · hmchoi@wiserbond.com</small>"
-    }
-}
-
-
-# ✅ Keyword Setting
-TOPIC_SETTINGS = {
-    "economic_slowdown": {
-        "search_term": "economic slowdown",
-        "keywords": [
-            "recession risk", "growth downgrade", "gdp contraction", "slowdown warning",
-            "economic deceleration", "output decline", "investment freeze",
-            "retail slowdown", "demand destruction"
-        ]
-    },
-    "interest_rate_risk": {
-        "search_term": "interest rate",
-        "keywords": [
-            "interest rate hike", "rate cut", "borrowing cost", "loan interest",
-            "tightening cycle", "monetary policy", "central bank decision",
-            "federal reserve", "policy rate", "financial conditions"
-        ]
-    },
-    "consumer_demand_shift": {
-        "search_term": "consumer demand",
-        "keywords": [
-            "spending cut", "demand softening", "consumer confidence drop",
-            "shift to essentials", "discretionary spending", "buying patterns",
-            "value-focused consumer", "retail sales weakness", "saving over spending"
-        ]
-    },
-    "trade_policy_shift": {
-        "search_term": "trade policy",
-        "keywords": [
-            "tariff", "export control", "import restriction", "trade agreement",
-            "retaliatory measures", "protectionism", "supply chain decoupling",
-            "FTA", "trade sanctions", "border tax"
-        ]
-    },
-    "currency_volatility": {
-        "search_term": "exchange rate",
-        "keywords": [
-            "currency volatility", "usd appreciation", "forex shock",
-            "yen depreciation", "exchange rate swing", "em currency drop",
-            "hedging costs", "import cost surge", "export competitiveness"
-        ]
-    },
-    "supply_chain_risk": {
-        "search_term": "supply chain disruption",
-        "keywords": [
-            "freight delay", "port congestion", "container shortage", "inventory strategy",
-            "shipping cost spike", "logistics bottleneck", "raw material delay",
-            "just-in-case strategy", "supplier instability", "transport disruption"
-        ]
-    },
-    "commodity_price_shock": {
-        "search_term": "commodity price",
-        "keywords": [
-            "oil price surge", "input cost pressure", "metal price jump",
-            "raw material inflation", "commodity rally", "diesel spike",
-            "energy-intensive sector", "commodity-driven inflation", "cost pass-through"
-        ]
-    },
-    "fiscal_spending_shift": {
-        "search_term": "government spending",
-        "keywords": [
-            "infrastructure bill", "fiscal stimulus", "budget expansion",
-            "subsidy program", "public investment", "stimulus withdrawal",
-            "austerity measures", "capital expenditure", "government procurement"
-        ]
-    },
-    "technology_disruption": {
-        "search_term": "AI adoption",
-        "keywords": [
-            "enterprise AI", "generative AI", "automation strategy", "AI-driven productivity",
-            "AI investment", "workflow automation", "LLM integration",
-            "tech stack upgrade", "job displacement", "AI policy shift"
-        ]
-    },
-    "climate_policy_impact": {
-        "search_term": "climate policy",
-        "keywords": [
-            "carbon tax", "CBAM", "emission regulation", "green mandate",
-            "climate disclosure", "esg compliance", "low-carbon transition",
-            "environmental subsidy", "net zero target", "decarbonization"
-        ]
     }
 }
 
