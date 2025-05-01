@@ -37,7 +37,8 @@ if "result" in st.session_state:
 
     # ✅ 감정 분포 시각화
     st.subheader("📈 Sentiment Breakdown")
-    draw_sentiment_chart(result["positive_news"] + result["negative_news"])
+    draw_sentiment_chart(result["sector_sentiment_scores"], selected_industry)
+
 
     # ✅ 감정별 요약
     st.subheader("✅ Positive Summary")
