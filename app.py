@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime
 
-from core import analyze_topic, analyze_articles_parallel
+from core import analyze_topic
 from config import TOPIC_SETTINGS, COUNTRY_LIST, INDUSTRY_SUBSECTORS
 from ui_components import draw_sentiment_chart
 from news_sentiment_tool_demo import get_news, filter_articles, summarize_by_sentiment
@@ -31,14 +31,15 @@ if run_analysis:
 # ✅ 결과 렌더링
 if "result" in st.session_state:
     result = st.session_state["result"]
+    selected_industry = st.session_state["industry"]  # ⬅️ 필수: 여기 추가
+
     st.markdown(f"### 🕒 Analysis Date: {st.session_state['timestamp']}")
-    st.markdown(f"**Topic:** {st.session_state['topic']}  |  **Country:** {st.session_state['country']}  |  **Industry:** {st.session_state['industry']}")
+    st.markdown(f"**Topic:** {st.session_state['topic']}  |  **Country:** {st.session_state['country']}  |  **Industry:** {selected_industry}")
     st.write("---")
 
     # ✅ 감정 분포 시각화
     st.subheader("📈 Sentiment Breakdown")
     draw_sentiment_chart(result["sector_sentiment_scores"], selected_industry)
-
 
     # ✅ 감정별 요약
     st.subheader("✅ Positive Summary")
