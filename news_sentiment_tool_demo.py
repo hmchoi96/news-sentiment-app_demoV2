@@ -108,9 +108,6 @@ def run_sentiment_and_summary(article):
         "summary": summary
     }
 
-def analyze_articles_parallel(articles):
-    with ThreadPoolExecutor() as executor:
-        return list(executor.map(run_sentiment_and_summary, articles))
 
 def draw_sentiment_chart(data):
     df = pd.DataFrame(data)
