@@ -14,6 +14,10 @@ from concurrent.futures import ThreadPoolExecutor
 def get_summary_pipeline():
     return pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
 
+def analyze_articles_parallel(articles):
+    with ThreadPoolExecutor() as executor:
+        return list(executor.map(run_sentiment_and_summary, articles))
+        
 def detect_impacted_sectors(articles, selected_industry):
     impact_map = {}
     source_map = {}
@@ -44,6 +48,7 @@ def summarize_sector_impact(sector_texts):
         return summary
     except Exception:
         return "Summary model failed."
+
 
 def compute_sector_sentiment_scores(analyzed, selected_industry):
     sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
