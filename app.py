@@ -1,5 +1,4 @@
 import streamlit as st
-import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 
@@ -90,9 +89,11 @@ if "result" in st.session_state:
             sector = item.get('sector', 'Unknown Sector')
             impact = item.get('impact', 'No summary available')
             source = item.get('source', 'Unknown')
-            st.markdown(f"- **{sector}**: {impact} ({source})", unsafe_allow_html=True)
+            article_count = item.get('article_count', 'n')
+            st.markdown(f"- **{sector}**: {impact} ({source}, {article_count}개 기사 기반)", unsafe_allow_html=True)
     else:
         st.info("No sector impact summaries available.")
+
 
     st.markdown("### 4. Wiserbond Interpretation")
     if expert_summary:
