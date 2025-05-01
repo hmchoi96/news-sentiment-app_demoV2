@@ -4,13 +4,12 @@ from datetime import datetime, timedelta
 import plotly.express as px
 import pandas as pd
 import streamlit as st
-from concurrent.futures import ThreadPoolExecutor
+
 from config import FROM_DATE
 
-# ✅ API Key
+# ✅ API Keys
 NEWS_API_KEY = '0e28b7f94fc04e6b9d130092886cabc6'
 NEWSDATA_API_KEY = 'pub_840368c52ddb1759503f2c24741bcaa218f23'
-
 
 @st.cache_resource
 def get_sentiment_pipeline():
@@ -109,22 +108,12 @@ def run_sentiment_and_summary(article):
         "summary": summary
     }
 
-
-def draw_sentiment_chart(data):
-    df = pd.DataFrame(data)
-    counts = df['sentiment'].value_counts().reset_index()
-    counts.columns = ['Sentiment', 'Count']
-    fig = px.bar(counts, x='Sentiment', y='Count', title='Sentiment Distribution')
-    st.plotly_chart(fig, use_container_width=True)
-
 def summarize_by_sentiment(articles, sentiment_label, keywords):
-    texts = []
-    for a in articles:
-        if a['sentiment'] == sentiment_label and a['description']:
-            combined = f"{a['description']} {a['title']}"
-            if contains_keywords(combined, keywords) and len(combined.split()) >= 40:
-                texts.append(f"{a['description']} (Title: {a['title']})")
-
+    texts = [
+        f"{a['description']} (Title: {a['title']})"
+        for a in articles
+        if a['sentiment'] == sentiment_label and a['description'] and contains_keywords(f"{a['description']} {a['title']}", keywords)
+    ]
     if len(texts) < 1:
         return "No matching articles found for summarization."
     chunks = []
