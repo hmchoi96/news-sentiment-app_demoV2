@@ -8,7 +8,6 @@ from config import LANG_TEXT, COUNTRY_LIST, INDUSTRY_SUBSECTORS
 from news_sentiment_tool_demo import TOPIC_SETTINGS
 from ui_components import display_news_section, draw_sentiment_chart
 
-# 💡 브랜드 컬러 적용
 WISERBOND_COLOR = "#051F5B"
 st.set_page_config(page_title="Wiserbond News Sentiment Report", layout="wide")
 
@@ -32,30 +31,33 @@ st.markdown(
 st.markdown("<small>This is demo version, please understand it may take a few seconds to analyze news.</small>", unsafe_allow_html=True)
 
 # ================================
-# Main Analysis Process
+# Run Button
 # ================================
-with st.spinner("🔎 Analyzing news articles... Please wait."):
-    result = analyze_topic(topic_choice, country_choice, industry_choice)
+run = st.button("🔍 Run Analysis")
 
-# ================================
-# Sentiment Chart
-# ================================
-st.markdown(LANG_TEXT[language_choice]["sentiment_chart"])
-draw_sentiment_chart(result["sentiment_counts"], WISERBOND_COLOR)
+if run:
+    with st.spinner("🔎 Analyzing news articles... Please wait."):
+        result = analyze_topic(topic_choice, country_choice, industry_choice)
 
-# ================================
-# News Summary Sections
-# ================================
-display_news_section("positive", result["positive_articles"], language_choice)
-display_news_section("negative", result["negative_articles"], language_choice)
+    # ================================
+    # Sentiment Chart
+    # ================================
+    st.markdown(LANG_TEXT[language_choice]["sentiment_chart"])
+    draw_sentiment_chart(result["sentiment_counts"], WISERBOND_COLOR)
 
-# ================================
-# Expert Interpretation
-# ================================
-st.markdown(LANG_TEXT[language_choice]["expert_insight"])
-st.markdown(result["expert_summary"])
+    # ================================
+    # News Summary Sections
+    # ================================
+    display_news_section("positive", result["positive_articles"], language_choice)
+    display_news_section("negative", result["negative_articles"], language_choice)
 
-# ================================
-# Footer
-# ================================
-st.markdown(LANG_TEXT[language_choice]["footer"], unsafe_allow_html=True)
+    # ================================
+    # Expert Interpretation
+    # ================================
+    st.markdown(LANG_TEXT[language_choice]["expert_insight"])
+    st.markdown(result["expert_summary"])
+
+    # ================================
+    # Footer
+    # ================================
+    st.markdown(LANG_TEXT[language_choice]["footer"], unsafe_allow_html=True)
