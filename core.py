@@ -9,6 +9,7 @@ from config import FROM_DATE, TOPIC_SETTINGS, INDUSTRY_SUBSECTORS, SECTOR_KEYWOR
 from collections import Counter
 from transformers import pipeline
 from concurrent.futures import ThreadPoolExecutor
+import streamlit as st
 
 @st.cache_resource
 def get_summary_pipeline():
