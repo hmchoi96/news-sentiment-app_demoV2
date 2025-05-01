@@ -14,10 +14,6 @@ import streamlit as st
 def get_summary_pipeline():
     return pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
 
-def analyze_articles_parallel(articles):
-    with ThreadPoolExecutor() as executor:
-        return list(executor.map(run_sentiment_and_summary, articles))
-
 def detect_impacted_sectors(articles, selected_industry):
     impact_map = {}
     source_map = {}
@@ -69,10 +65,11 @@ def compute_sector_sentiment_scores(analyzed, selected_industry):
                 sector_scores[sector] += score
                 sector_counts[sector] += 1
                 break
-    return {
+    averaged_scores = {
         sector: (sector_scores[sector] / sector_counts[sector]) if sector_counts[sector] else 0.0
         for sector in relevant_sectors
     }
+    return averaged_scores
 
 def generate_fallback_impact_summary(expert_summary, selected_industry="All"):
     fallback_summary = []
@@ -108,7 +105,7 @@ def analyze_topic(topic, country="Global", industry="All", language="English"):
 
     raw_articles = get_news(search_term)
     filtered_articles = filter_articles(raw_articles, keywords)
-    analyzed_articles = analyze_articles_parallel(filtered_articles)
+    analyzed_articles = list(ThreadPoolExecutor().map(run_sentiment_and_summary, filtered_articles))
 
     sentiment_counts = {"Positive": 0, "Neutral": 0, "Negative": 0}
     for a in analyzed_articles:
@@ -123,6 +120,7 @@ def analyze_topic(topic, country="Global", industry="All", language="English"):
 
     dominant_sentiment = max(sentiment_counts, key=sentiment_counts.get)
 
+    # 자동 이슈 요약
     top_texts = [f"{a['title']}. {a.get('description', '')}" for a in analyzed_articles]
     summary_input = " ".join(top_texts)[:1000]
     summarizer = get_summary_pipeline()
