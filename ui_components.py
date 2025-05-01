@@ -28,6 +28,7 @@ def display_news_section(label, news_list, max_visible=3):
                 st.markdown(f"**Summary:** {news['description']}")
                 st.write("---")
 
+
 def draw_sentiment_chart(sector_sentiment_scores, selected_industry="All"):
     if selected_industry != "All":
         sectors = list(INDUSTRY_SUBSECTORS.get(selected_industry, {}).keys())
