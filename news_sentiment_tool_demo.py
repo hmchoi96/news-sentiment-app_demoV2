@@ -4,8 +4,10 @@ from datetime import datetime, timedelta
 import plotly.express as px
 import pandas as pd
 import streamlit as st
+from concurrent.futures import ThreadPoolExecutor
+from config import FROM_DATE
 
-# ✅ API Key 설정
+# ✅ API Key
 NEWS_API_KEY = '0e28b7f94fc04e6b9d130092886cabc6'
 NEWSDATA_API_KEY = 'pub_840368c52ddb1759503f2c24741bcaa218f23'
 
@@ -57,7 +59,6 @@ def deduplicate_articles(articles):
     return unique
 
 def get_news(search_term, max_pages=4, page_size=100):
-    from config import FROM_DATE  # import locally to avoid circular dependency
     all_articles = []
     for page in range(1, max_pages + 1):
         url = (
@@ -106,13 +107,6 @@ def run_sentiment_and_summary(article):
         "score": round(sentiment['score'], 2),
         "summary": summary
     }
-
-def draw_sentiment_chart(data):
-    df = pd.DataFrame(data)
-    counts = df['sentiment'].value_counts().reset_index()
-    counts.columns = ['Sentiment', 'Count']
-    fig = px.bar(counts, x='Sentiment', y='Count', title='Sentiment Distribution')
-    st.plotly_chart(fig, use_container_width=True)
 
 def summarize_by_sentiment(articles, sentiment_label, keywords):
     texts = [
