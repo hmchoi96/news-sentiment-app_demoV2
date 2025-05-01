@@ -3,7 +3,6 @@ from news_sentiment_tool_demo import (
     filter_articles,
     run_sentiment_and_summary,
     summarize_by_sentiment
-    
 )
 from config import FROM_DATE, TOPIC_SETTINGS, INDUSTRY_SUBSECTORS, SECTOR_KEYWORDS
 from collections import Counter
@@ -18,7 +17,7 @@ def get_summary_pipeline():
 def analyze_articles_parallel(articles):
     with ThreadPoolExecutor() as executor:
         return list(executor.map(run_sentiment_and_summary, articles))
-        
+
 def detect_impacted_sectors(articles, selected_industry):
     impact_map = {}
     source_map = {}
@@ -42,14 +41,13 @@ def detect_impacted_sectors(articles, selected_industry):
 def summarize_sector_impact(sector_texts):
     if not sector_texts:
         return "No clear impact found."
-    summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
+    summarizer = get_summary_pipeline()
     text_block = " ".join(sector_texts)[:512]
     try:
         summary = summarizer(text_block, max_length=40, min_length=10, do_sample=False)[0]["summary_text"]
         return summary
     except Exception:
         return "Summary model failed."
-
 
 def compute_sector_sentiment_scores(analyzed, selected_industry):
     sentiment_map = {"NEGATIVE": 0.0, "NEUTRAL": 0.5, "POSITIVE": 1.0}
@@ -71,11 +69,10 @@ def compute_sector_sentiment_scores(analyzed, selected_industry):
                 sector_scores[sector] += score
                 sector_counts[sector] += 1
                 break
-    averaged_scores = {
+    return {
         sector: (sector_scores[sector] / sector_counts[sector]) if sector_counts[sector] else 0.0
         for sector in relevant_sectors
     }
-    return averaged_scores
 
 def generate_fallback_impact_summary(expert_summary, selected_industry="All"):
     fallback_summary = []
@@ -111,9 +108,7 @@ def analyze_topic(topic, country="Global", industry="All", language="English"):
 
     raw_articles = get_news(search_term)
     filtered_articles = filter_articles(raw_articles, keywords)
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        analyzed_articles = list(executor.map(run_sentiment_and_summary, filtered_articles))
-
+    analyzed_articles = analyze_articles_parallel(filtered_articles)
 
     sentiment_counts = {"Positive": 0, "Neutral": 0, "Negative": 0}
     for a in analyzed_articles:
@@ -128,7 +123,6 @@ def analyze_topic(topic, country="Global", industry="All", language="English"):
 
     dominant_sentiment = max(sentiment_counts, key=sentiment_counts.get)
 
-    # ✅ 자동 이슈 요약
     top_texts = [f"{a['title']}. {a.get('description', '')}" for a in analyzed_articles]
     summary_input = " ".join(top_texts)[:1000]
     summarizer = get_summary_pipeline()
@@ -161,19 +155,4 @@ def analyze_topic(topic, country="Global", industry="All", language="English"):
     if not impact_summary or len(impact_summary) < 2:
         fallback = generate_fallback_impact_summary(expert_summary, industry)
         existing_sectors = {item["sector"] for item in impact_summary}
-        filtered_fallback = [f for f in fallback if f["sector"] not in existing_sectors]
-        impact_summary.extend(filtered_fallback)
-
-    sector_sentiment_scores = compute_sector_sentiment_scores(analyzed_articles, industry)
-
-    return {
-        "sentiment_counts": sentiment_counts,
-        "positive_news": pos_news,
-        "negative_news": neg_news,
-        "positive_sources": pos_sources,
-        "negative_sources": neg_sources,
-        "executive_summary": executive_summary,
-        "impact_summary": impact_summary,
-        "sector_sentiment_scores": sector_sentiment_scores,
-        "expert_summary": expert_summary
-    }
+        filtered_fallback = [f for f in fallback if f["se]()]()_
