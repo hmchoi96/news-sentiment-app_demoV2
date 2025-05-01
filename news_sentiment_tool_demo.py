@@ -5,6 +5,7 @@ import plotly.express as px
 import pandas as pd
 import streamlit as st
 from concurrent.futures import ThreadPoolExecutor
+from config import FROM_DATE
 
 # ✅ API Key
 NEWS_API_KEY = '0e28b7f94fc04e6b9d130092886cabc6'
