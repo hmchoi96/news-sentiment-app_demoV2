@@ -1,7 +1,10 @@
 import requests
 from transformers import pipeline
 from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
+import plotly.express as px
+import pandas as pd
+import streamlit as st
+from concurrent.futures import ThreadPoolExecutor
 
 # ✅ API Key
 NEWS_API_KEY = '0e28b7f94fc04e6b9d130092886cabc6'
@@ -52,6 +55,14 @@ TOPIC_SETTINGS = {
 
 FROM_DATE = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
 
+@st.cache_resource
+def get_sentiment_pipeline():
+    return pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english", framework="pt")
+
+@st.cache_resource
+def get_summary_pipeline():
+    return pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
+
 def get_news_newsdata(query, language="en", country="ca", max_results=30):
     url = "https://newsdata.io/api/1/news"
     params = {
@@ -91,7 +102,6 @@ def deduplicate_articles(articles):
             seen.add(key)
     return unique
 
-
 def get_news(search_term, max_pages=4, page_size=100):
     all_articles = []
     for page in range(1, max_pages + 1):
@@ -106,11 +116,8 @@ def get_news(search_term, max_pages=4, page_size=100):
             all_articles.extend(data['articles'])
         if len(data.get("articles", [])) < page_size:
             break
-
-    # ✅ 항상 NewsData에서 5개만 보조로 가져옴
     backup_articles = get_news_newsdata(search_term)[:5]
     all_articles = deduplicate_articles(all_articles + backup_articles)
-
     return all_articles
 
 def contains_keywords(text, keywords):
@@ -131,23 +138,32 @@ def filter_articles(articles, keywords, max_filtered=50):
             break
     return filtered
 
-def run_sentiment_analysis(articles):
-    sentiment_pipeline = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english", framework="pt")
-    results = []
-    for a in articles:
-        text = f"{a['title']}. {a['description'] or ''}"
-        sentiment = sentiment_pipeline(text)[0]
-        results.append({
-            "source": a['source']['name'] if isinstance(a['source'], dict) else a['source'],
-            "title": a['title'],
-            "description": a['description'],
-            "sentiment": sentiment['label'],
-            "score": round(sentiment['score'], 2)
-        })
-    return results
+def run_sentiment_and_summary(article):
+    sentiment_pipeline = get_sentiment_pipeline()
+    summary_pipeline = get_summary_pipeline()
+    sentiment = sentiment_pipeline(f"{article['title']}. {article['description'] or ''}")[0]
+    summary = summary_pipeline(article['description'] or article['title'])[0]['summary_text']
+    return {
+        "source": article['source']['name'] if isinstance(article['source'], dict) else article['source'],
+        "title": article['title'],
+        "description": article['description'],
+        "sentiment": sentiment['label'],
+        "score": round(sentiment['score'], 2),
+        "summary": summary
+    }
+
+def analyze_articles_parallel(articles):
+    with ThreadPoolExecutor() as executor:
+        return list(executor.map(run_sentiment_and_summary, articles))
+
+def draw_sentiment_chart(data):
+    df = pd.DataFrame(data)
+    counts = df['sentiment'].value_counts().reset_index()
+    counts.columns = ['Sentiment', 'Count']
+    fig = px.bar(counts, x='Sentiment', y='Count', title='Sentiment Distribution')
+    st.plotly_chart(fig, use_container_width=True)
 
 def summarize_by_sentiment(articles, sentiment_label, keywords):
-    summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
     texts = [
         f"{a['description']} (Title: {a['title']})"
         for a in articles
@@ -167,7 +183,7 @@ def summarize_by_sentiment(articles, sentiment_label, keywords):
         total_words += w_count
     truncated = " ".join(current_chunk)
     try:
-        summary = summarizer(truncated, max_length=200, min_length=60, do_sample=False)[0]['summary_text']
+        summary = get_summary_pipeline()(truncated, max_length=200, min_length=60, do_sample=False)[0]['summary_text']
         return summary
-    except Exception as e:
+    except Exception:
         return "Summarization failed due to model input error."
