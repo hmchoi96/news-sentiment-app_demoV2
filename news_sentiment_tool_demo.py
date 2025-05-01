@@ -118,11 +118,13 @@ def draw_sentiment_chart(data):
     st.plotly_chart(fig, use_container_width=True)
 
 def summarize_by_sentiment(articles, sentiment_label, keywords):
-    texts = [
-        f"{a['description']} (Title: {a['title']})"
-        for a in articles
-        if a['sentiment'] == sentiment_label and a['description'] and contains_keywords(f"{a['description']} {a['title']}", keywords)
-    ]
+    texts = []
+    for a in articles:
+        if a['sentiment'] == sentiment_label and a['description']:
+            combined = f"{a['description']} {a['title']}"
+            if contains_keywords(combined, keywords) and len(combined.split()) >= 40:
+                texts.append(f"{a['description']} (Title: {a['title']})")
+
     if len(texts) < 1:
         return "No matching articles found for summarization."
     chunks = []
