@@ -1,13 +1,14 @@
 from news_sentiment_tool_demo import (
     get_news,
     filter_articles,
-    run_sentiment_analysis,
+    run_sentiment_and_summary,
     summarize_by_sentiment,
     TOPIC_SETTINGS
 )
 from config import INDUSTRY_SUBSECTORS, SECTOR_KEYWORDS
 from collections import Counter
 from transformers import pipeline
+from concurrent.futures import ThreadPoolExecutor
 
 def detect_impacted_sectors(articles, selected_industry):
     impact_map = {}
@@ -97,26 +98,40 @@ def analyze_topic(topic, country="Global", industry="All", language="English"):
     if industry != "All":
         industry_keywords = [kw for s in INDUSTRY_SUBSECTORS.get(industry, {}).values() for kw in s]
         keywords += industry_keywords
+
     raw_articles = get_news(search_term)
     filtered_articles = filter_articles(raw_articles, keywords)
-    analyzed_articles = run_sentiment_analysis(filtered_articles)
+    analyzed_articles = list(ThreadPoolExecutor().map(run_sentiment_and_summary, filtered_articles))
+
     sentiment_counts = {"Positive": 0, "Neutral": 0, "Negative": 0}
     for a in analyzed_articles:
         label = a["sentiment"].capitalize()
         if label in sentiment_counts:
             sentiment_counts[label] += 1
+
     pos_news = [a for a in analyzed_articles if a["sentiment"] == "POSITIVE"]
     neg_news = [a for a in analyzed_articles if a["sentiment"] == "NEGATIVE"]
     pos_sources = sorted(set(a["source"] for a in pos_news))
     neg_sources = sorted(set(a["source"] for a in neg_news))
+
     dominant_sentiment = max(sentiment_counts, key=sentiment_counts.get)
-    top_issue_summary = "renewed US tariff threats and China's retaliatory stance"
+
+    # ✅ 자동 이슈 요약
+    top_texts = [f"{a['title']}. {a.get('description', '')}" for a in analyzed_articles]
+    summary_input = " ".join(top_texts)[:1000]
+    summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
+    try:
+        top_issue_summary = summarizer(summary_input, max_length=40, min_length=10, do_sample=False)[0]["summary_text"]
+    except Exception:
+        top_issue_summary = "Unable to generate issue summary."
+
     executive_summary = (
         f"Over the past 3 days, news coverage on **{topic}** has been predominantly "
         f"**{dominant_sentiment.lower()}**, with a focus on {top_issue_summary}."
     )
-    impact_summary = []
+
     impact_map, source_map = detect_impacted_sectors(analyzed_articles, industry)
+    impact_summary = []
     for sector, texts in impact_map.items():
         sources = source_map.get(sector, [])
         most_common_source = Counter(sources).most_common(1)[0][0] if sources else "Unknown"
@@ -125,16 +140,20 @@ def analyze_topic(topic, country="Global", industry="All", language="English"):
             "impact": summarize_sector_impact(texts),
             "source": most_common_source
         })
+
     expert_summary = {
         "positive_summary": summarize_by_sentiment(analyzed_articles, "POSITIVE", keywords),
         "negative_summary": summarize_by_sentiment(analyzed_articles, "NEGATIVE", keywords)
     }
+
     if not impact_summary or len(impact_summary) < 2:
         fallback = generate_fallback_impact_summary(expert_summary, industry)
         existing_sectors = {item["sector"] for item in impact_summary}
         filtered_fallback = [f for f in fallback if f["sector"] not in existing_sectors]
         impact_summary.extend(filtered_fallback)
+
     sector_sentiment_scores = compute_sector_sentiment_scores(analyzed_articles, industry)
+
     return {
         "sentiment_counts": sentiment_counts,
         "positive_news": pos_news,
