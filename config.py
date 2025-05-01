@@ -34,46 +34,78 @@ LANG_TEXT = {
 
 # ✅ Keyword Setting
 TOPIC_SETTINGS = {
-    "tariff": {
-        "search_term": "tariff",
-        "keywords": [
-            "tariff", "tariffs", "duties", "customs", "import", "export", "trade",
-            "sanction", "levy", "protectionism", "trade war", "tariff hike",
-            "border tax", "retaliatory", "quota"
-        ]
-    },
-    "trump": {
-        "search_term": "Donald Trump",
-        "keywords": [
-            "trump", "donald", "republican", "president", "white house",
-            "gop", "maga", "trump administration", "former president",
-            "2024 election", "trump rally", "indictment", "mar-a-lago"
-        ]
-    },
     "inflation": {
         "search_term": "inflation",
         "keywords": [
-            "inflation", "price index", "cpi", "ppi", "consumer price", "core inflation",
-            "cost of living", "rising prices", "inflationary pressure",
-            "interest rates", "wage growth", "monetary tightening", "headline inflation",
-            "economic overheating", "sticky inflation", "disinflation"
+            "inflation", "cpi", "ppi", "cost of living", "price surge", "wage pressure",
+            "interest rate", "consumer price", "pricing strategy", "demand slowdown"
         ]
     },
-    "fed": {
-        "search_term": "fed",
+    "fed_policy": {
+        "search_term": "federal reserve",
         "keywords": [
             "federal reserve", "interest rate", "rate hike", "rate cut", "jerome powell",
-            "fed", "fomc", "central bank", "tightening", "pause", "pivot", "monetary policy"
+            "fomc", "monetary policy", "terminal rate", "neutral rate", "policy pause"
         ]
     },
-    "unemployment": {
-        "search_term": "employment",
+    "supply_chain": {
+        "search_term": "supply chain",
         "keywords": [
-            "unemployment", "employment", "jobless", "nonfarm payroll", "labor market", "jobs report",
-            "layoffs", "job cuts", "hiring freeze", "job growth", "employment rate"
+            "supply chain", "shipping delay", "freight cost", "port congestion",
+            "logistics disruption", "inventory shortage", "container backlog", "import bottleneck"
+        ]
+    },
+    "china_demand": {
+        "search_term": "china economy",
+        "keywords": [
+            "china demand", "china slowdown", "retail sales china", "export china",
+            "youth unemployment", "stimulus", "property crisis", "common prosperity"
+        ]
+    },
+    "ai_adoption": {
+        "search_term": "AI adoption",
+        "keywords": [
+            "AI adoption", "chatgpt", "generative AI", "automation", "machine learning integration",
+            "AI investment", "AI workforce", "enterprise AI", "AI policy", "productivity gain"
+        ]
+    },
+    "green_subsidy": {
+        "search_term": "clean energy subsidy",
+        "keywords": [
+            "clean energy subsidy", "IRA", "green tax credit", "renewable policy",
+            "solar incentive", "battery subsidy", "hydrogen funding", "EV rebate"
+        ]
+    },
+    "geopolitical_risk": {
+        "search_term": "geopolitical risk",
+        "keywords": [
+            "geopolitical risk", "supply chain tension", "taiwan strait", "russia sanctions",
+            "conflict escalation", "military drills", "trade war", "foreign investment risk"
+        ]
+    },
+    "labor_shortage": {
+        "search_term": "labor market",
+        "keywords": [
+            "labor shortage", "talent gap", "wage inflation", "recruiting difficulty",
+            "skill mismatch", "remote hiring", "job opening", "retention strategy"
+        ]
+    },
+    "fx_volatility": {
+        "search_term": "currency volatility",
+        "keywords": [
+            "currency volatility", "usd strength", "fx risk", "exchange rate swing",
+            "yen depreciation", "cad/usd", "forex hedging", "em currency drop"
+        ]
+    },
+    "consumer_weakness": {
+        "search_term": "consumer spending",
+        "keywords": [
+            "consumer weakness", "retail slowdown", "spending cut", "credit card debt",
+            "buying power", "discretionary pullback", "consumer confidence", "personal savings"
         ]
     }
 }
+
 
 FROM_DATE = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
 
