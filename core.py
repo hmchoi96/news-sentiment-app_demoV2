@@ -17,7 +17,7 @@ def get_summary_pipeline():
 
 def analyze_articles_parallel(articles):
     with ThreadPoolExecutor() as executor:
-        return list(executor.map(run_sentiment_and_summary, articles))
+        return list(executor.map(run_sentiment_analysis, articles))
         
 def detect_impacted_sectors(articles, selected_industry):
     impact_map = {}
@@ -112,7 +112,7 @@ def analyze_topic(topic, country="Global", industry="All", language="English"):
     raw_articles = get_news(search_term)
     filtered_articles = filter_articles(raw_articles, keywords)
     with ThreadPoolExecutor(max_workers=4) as executor:
-        analyzed_articles = list(executor.map(run_sentiment_and_summary, filtered_articles))
+        analyzed_articles = list(executor.map(run_sentiment_analysis, filtered_articles))
 
 
     sentiment_counts = {"Positive": 0, "Neutral": 0, "Negative": 0}
