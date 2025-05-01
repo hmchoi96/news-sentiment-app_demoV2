@@ -1,6 +1,7 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
+from config import INDUSTRY_SUBSECTORS
 
 WISERBOND_COLOR = "#051F5B"
 
@@ -27,10 +28,7 @@ def display_news_section(label, news_list, max_visible=3):
                 st.markdown(f"**Summary:** {news['description']}")
                 st.write("---")
 
-
 def draw_sentiment_chart(sector_sentiment_scores, selected_industry="All"):
-    from config import INDUSTRY_SUBSECTORS
-
     if selected_industry != "All":
         sectors = list(INDUSTRY_SUBSECTORS.get(selected_industry, {}).keys())
         scores = [sector_sentiment_scores.get(sec, 0.0) for sec in sectors]
