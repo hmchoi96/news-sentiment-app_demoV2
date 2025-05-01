@@ -2,13 +2,17 @@ from news_sentiment_tool_demo import (
     get_news,
     filter_articles,
     run_sentiment_and_summary,
-    summarize_by_sentiment,
-    TOPIC_SETTINGS
+    summarize_by_sentiment
+    
 )
-from config import INDUSTRY_SUBSECTORS, SECTOR_KEYWORDS
+from config import FROM_DATE, TOPIC_SETTINGS, INDUSTRY_SUBSECTORS, SECTOR_KEYWORDS
 from collections import Counter
 from transformers import pipeline
 from concurrent.futures import ThreadPoolExecutor
+
+@st.cache_resource
+def get_summary_pipeline():
+    return pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
 
 def detect_impacted_sectors(articles, selected_industry):
     impact_map = {}
@@ -119,7 +123,7 @@ def analyze_topic(topic, country="Global", industry="All", language="English"):
     # ✅ 자동 이슈 요약
     top_texts = [f"{a['title']}. {a.get('description', '')}" for a in analyzed_articles]
     summary_input = " ".join(top_texts)[:1000]
-    summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
+    summarizer = get_summary_pipeline()
     try:
         top_issue_summary = summarizer(summary_input, max_length=40, min_length=10, do_sample=False)[0]["summary_text"]
     except Exception:
