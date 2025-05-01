@@ -1,7 +1,7 @@
 from news_sentiment_tool_demo import (
     get_news,
     filter_articles,
-    run_sentiment_and_summary,
+    run_sentiment_analysis,
     summarize_by_sentiment
     
 )
