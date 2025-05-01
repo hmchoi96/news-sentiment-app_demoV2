@@ -28,6 +28,52 @@ LANG_TEXT = {
     }
 }
 
+
+# ✅ Keyword Setting
+TOPIC_SETTINGS = {
+    "tariff": {
+        "search_term": "tariff",
+        "keywords": [
+            "tariff", "tariffs", "duties", "customs", "import", "export", "trade",
+            "sanction", "levy", "protectionism", "trade war", "tariff hike",
+            "border tax", "retaliatory", "quota"
+        ]
+    },
+    "trump": {
+        "search_term": "Donald Trump",
+        "keywords": [
+            "trump", "donald", "republican", "president", "white house",
+            "gop", "maga", "trump administration", "former president",
+            "2024 election", "trump rally", "indictment", "mar-a-lago"
+        ]
+    },
+    "inflation": {
+        "search_term": "inflation",
+        "keywords": [
+            "inflation", "price index", "cpi", "ppi", "consumer price", "core inflation",
+            "cost of living", "rising prices", "inflationary pressure",
+            "interest rates", "wage growth", "monetary tightening", "headline inflation",
+            "economic overheating", "sticky inflation", "disinflation"
+        ]
+    },
+    "fed": {
+        "search_term": "fed",
+        "keywords": [
+            "federal reserve", "interest rate", "rate hike", "rate cut", "jerome powell",
+            "fed", "fomc", "central bank", "tightening", "pause", "pivot", "monetary policy"
+        ]
+    },
+    "unemployment": {
+        "search_term": "employment",
+        "keywords": [
+            "unemployment", "employment", "jobless", "nonfarm payroll", "labor market", "jobs report",
+            "layoffs", "job cuts", "hiring freeze", "job growth", "employment rate"
+        ]
+    }
+}
+
+FROM_DATE = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
+
 COUNTRY_LIST = ["Global", "United States", "Canada", "Japan", "China", "Germany", "India", "South Korea"]
 
 INDUSTRY_SUBSECTORS = {
