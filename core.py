@@ -111,7 +111,9 @@ def analyze_topic(topic, country="Global", industry="All", language="English"):
 
     raw_articles = get_news(search_term)
     filtered_articles = filter_articles(raw_articles, keywords)
-    analyzed_articles = list(ThreadPoolExecutor().map(run_sentiment_and_summary, filtered_articles))
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        analyzed_articles = list(executor.map(run_sentiment_and_summary, filtered_articles))
+
 
     sentiment_counts = {"Positive": 0, "Neutral": 0, "Negative": 0}
     for a in analyzed_articles:
