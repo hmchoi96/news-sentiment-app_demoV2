@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+
+
 LANG_TEXT = {
     "English": {
         "header": "📊 Wiserbond News Sentiment Report",
